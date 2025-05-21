@@ -26,7 +26,7 @@ export function Welcome() {
               What&apos;s next?
             </p>
             <p>
-              <NavLink to="/maketree">Maketree</NavLink>
+              <NavLink to="/generate">Generate an airdrop</NavLink>
             </p>
             <ul>
               {resources.map(({ href, text, icon }) => (
