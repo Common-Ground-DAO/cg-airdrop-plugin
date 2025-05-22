@@ -1,13 +1,13 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import MakeTree from "../maketree/maketree";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Generate an airdrop" },
+    { name: "description", content: "Generate an airdrop" },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <MakeTree />;
 }

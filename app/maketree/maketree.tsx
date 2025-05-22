@@ -37,6 +37,7 @@ function FormatUnits({value, decimals}: {value: string, decimals: number}) {
 export default function MakeTree() {
   const [rows, setRows] = useState<[string, string][]>([]);
   const [tree, setTree] = useState<StandardMerkleTree<[string, string]> | null>(null);
+  const [proofIndexMap, setProofIndexMap] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [decimals, _setDecimals] = useState<number>(18);
@@ -67,8 +68,17 @@ export default function MakeTree() {
         const treeRows = (data as { address: string, amount: string }[]).map((record) => [record.address, record.amount] as [string, string]);
         setRows(treeRows.sort((a, b) => (BigInt(b[1]) - BigInt(a[1])) > 0n ? 1 : -1));
         const tree = StandardMerkleTree.of(treeRows, ["address", "uint256"]);
-        setTree(tree);
+        
         console.log(tree.dump());
+
+        // Create a map of proof index to proof
+        const proofIndexMap = new Map<string, number>();
+        for (const [i, v] of tree.entries()) {
+          proofIndexMap.set(v[0], i);
+        }
+
+        setTree(tree);
+        setProofIndexMap(proofIndexMap);
       });
 
       setLoading(false);
@@ -88,8 +98,9 @@ export default function MakeTree() {
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
-      {tree && !loading && (
-        <table className="table font-mono max-w-[min(700px,100vw)]">
+      {tree && !loading && (<>
+        {!!tree.root && <><h3 className="text-lg font-bold mt-4">Tree Root</h3><p>{tree.root}</p></>}
+        <table className="table font-mono max-w-[min(700px,100vw)] mt-4">
           <thead>
             <tr>
               <th>Address</th>
@@ -104,13 +115,35 @@ export default function MakeTree() {
                   />
                 </div>
               </th>
+              <th>Proof</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => <tr key={row[0]}><td>{row[0]}</td><td><FormatUnits value={row[1]} decimals={decimals} /></td></tr>)}
+            {rows.map((row) => (
+              <tr key={row[0]}>
+                <td>
+                  {row[0]}
+                </td>
+                <td>
+                  <FormatUnits value={row[1]} decimals={decimals} />
+                </td>
+                <td>
+                  <button className="btn btn-sm btn-outline" onClick={() => {
+                    const index = proofIndexMap.get(row[0]);
+                    if (!!tree && index !== undefined) {
+                      const proof = tree.getProof(index);
+                      console.log(`Proof for address ${row[0]}, amount ${row[1]}:`);
+                      console.log(proof);
+                    }
+                  }}>
+                    Proof
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
-      )}
+      </>)}
     </div>
   );
 }
