@@ -1,6 +1,9 @@
+// types for later imports, to improve code splitting
 import type { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import type { AirdropClaim__factory } from "../types/contracts/factories/contracts/AirdropClaim__factory";
+
 import { useCallback, useEffect, useState } from "react";
-import { useAccount, useConnect, useDisconnect, useDeployContract } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useDeployContract, useReadContract } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 declare global {
@@ -39,7 +42,7 @@ function FormatUnits({value, decimals}: {value: string, decimals: number}) {
     <div className="flex items-center font-mono justify-end">
       <div>{int}</div>
       <div>{decimal_sep}</div>
-      <div className="text-xs max-w-10 overflow-x-hidden text-ellipsis">{frac}</div>
+      <div className="max-w-10 overflow-x-hidden text-ellipsis">{frac}</div>
     </div>
   );
 }
@@ -94,6 +97,7 @@ export default function MakeTree() {
   const [decimals, _setDecimals] = useState<number>(18);
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string | null>(null);
+  const [abi, setAbi] = useState<typeof AirdropClaim__factory.abi | null>(null);
 
   const { address, isConnected } = useAccount();
   const { 
@@ -103,6 +107,24 @@ export default function MakeTree() {
     data: txHash 
   } = useDeployContract();
 
+  const getAirdropClaimFactory = async () => {
+    const { AirdropClaim__factory } = await import("../types/contracts/factories/contracts/AirdropClaim__factory");
+    return AirdropClaim__factory;
+  }
+
+  useEffect(() => {
+    if (isBrowser) {
+      getAirdropClaimFactory().then(factory => setAbi(factory.abi));
+    }
+  }, [isBrowser]);
+  
+  const { data: hasClaimed } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: abi || [],
+    functionName: "hasClaimed",
+    args: [address as `0x${string}`],
+  });
+  
   // Track contract address from transaction receipt
   useEffect(() => {
     if (!isBrowser) return; // Skip on server-side
@@ -187,12 +209,12 @@ export default function MakeTree() {
 
   const handleDeployContract = async () => {
     if (!tree || !tokenAddress || !isConnected) return;
-    const { AirdropClaim__factory } = await import("../types/contracts/factories/contracts/AirdropClaim__factory");
+    const factory = await getAirdropClaimFactory();
 
     try {
       deployContract({
-        abi: AirdropClaim__factory.abi,
-        bytecode: AirdropClaim__factory.bytecode,
+        abi: factory.abi,
+        bytecode: factory.bytecode,
         args: [tokenAddress as `0x${string}`, tree.root as `0x${string}`]
       });
     } catch (err) {
