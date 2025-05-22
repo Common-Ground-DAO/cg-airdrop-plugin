@@ -1,5 +1,17 @@
+# Dependency directories
+node_modules
+dist
+build
+
+# Cache
+.cache
+.npm
 .DS_Store
-/node_modules/
+contracts/artifacts
+contracts/typechain
+contracts/cache
+app/artifacts
+app/types/contracts
 
 # React Router
 /.react-router/

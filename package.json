@@ -6,10 +6,13 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "compile-contracts": "cd contracts && npx hardhat compile",
+    "generate-types": "npm run compile-contracts && mkdir -p app/types/contracts && cp -r contracts/typechain/* app/types/contracts/"
   },
   "dependencies": {
     "@common-ground-dao/cg-plugin-lib": "^0.9.12",
+    "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
@@ -18,7 +21,9 @@
     "isbot": "^5.1.27",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router": "^7.5.3"
+    "react-router": "^7.5.3",
+    "viem": "^2.7.14",
+    "wagmi": "^2.15.4"
   },
   "devDependencies": {
     "@react-router/dev": "^7.5.3",
