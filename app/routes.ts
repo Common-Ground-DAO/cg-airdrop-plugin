@@ -6,5 +6,7 @@ export default [
         route("create", "routes/create.tsx"),
     ]),
     route("api/sign", "routes/api.sign.tsx"),
-    route("api/airdrops", "routes/api.airdrops.tsx"),
+    route("api/airdrop/create", "routes/api.airdrop.create.tsx"),
+    route("api/airdrop/list/:communityId", "routes/api.airdrop.list.tsx"),
+    route("api/airdrop/items/:airdropId", "routes/api.airdrop.items.tsx"),
 ] satisfies RouteConfig;

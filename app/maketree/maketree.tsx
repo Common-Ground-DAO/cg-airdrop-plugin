@@ -47,32 +47,6 @@ function FormatUnits({value, decimals}: {value: string, decimals: number}) {
   );
 }
 
-function WalletConnect() {
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
-
-  if (isConnected) {
-    return (
-      <div className="flex flex-col items-center">
-        <p className="font-mono text-sm mb-2">Connected: {address}</p>
-        <button className="btn btn-sm btn-outline" onClick={() => disconnect()}>
-          Disconnect
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      className="btn btn-primary"
-      onClick={() => connect({ connector: injected() })}
-    >
-      Connect Wallet
-    </button>
-  );
-}
-
 // ClientOnly component to prevent hydration issues
 function ClientOnly({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -228,8 +202,6 @@ export default function MakeTree() {
 
       <ClientOnly>
         <div className="flex flex-col items-center gap-4">
-          <WalletConnect />
-
           <button className="btn btn-primary pointer-events-none relative">
             Upload CSV
             <input type="file" className="opacity-0 pointer-events-auto h-full w-full absolute top-0 left-0" accept=".csv" onChange={handleFileUpload} />

@@ -38,7 +38,7 @@ const config = createConfig({
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="aqua">
+    <html lang="en" data-theme="silk">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,7 +58,7 @@ export default function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-neutral" data-theme="aqua">
+        <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200" data-theme="silk">
           <Outlet />
         </div>
       </QueryClientProvider>
