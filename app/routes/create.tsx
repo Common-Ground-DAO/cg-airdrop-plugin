@@ -7,6 +7,6 @@ export function meta() {
   ];
 }
 
-export default function AirdropsCreate() {
+export default function Create() {
   return <MakeTree />;
 } 

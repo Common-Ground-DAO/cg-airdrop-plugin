@@ -1,10 +1,9 @@
 import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Form, useSubmit } from "react-router";
+import { Form, NavLink, useSubmit } from "react-router";
 import { useCgPluginLib } from "~/hooks";
 
 export default function Menu() {
-  const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
   const submit = useSubmit();
   const cgPluginLib = useCgPluginLib();
   const [userInfo, setUserInfo] = useState<UserInfoResponsePayload | null>(null);
@@ -36,7 +35,6 @@ export default function Menu() {
 
   const handleCreateAirdrop = useCallback(() => {
     if (!communityInfo || !userInfo) return;
-    setIsCreatingAirdrop(true);
     
     const formData = new FormData();
     formData.append("name", "Test Airdrop");
@@ -61,9 +59,9 @@ export default function Menu() {
     <div className="card bg-base-200 m-4 p-3 grid grid-cols-3 gap-2">
       {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
       <div className="flex flex-row items-center justify-center gap-2">
-        <button className="btn btn-accent btn-sm rounded-full" onClick={handleCreateAirdrop}>Airdrops</button>
+        <NavLink to="/" className="btn btn-accent btn-sm rounded-full">Airdrops</NavLink>
         {isAdmin && (<>
-          <button className="btn btn-accent btn-sm rounded-full" onClick={handleCreateAirdrop}>Create Airdrop</button>
+          <NavLink to="/create" className="btn btn-accent btn-sm rounded-full">Create Airdrop</NavLink>
         </>)}
       </div>
       {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
