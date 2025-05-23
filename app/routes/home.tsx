@@ -11,7 +11,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div className="flex flex-row h-full">
+    <div className="flex flex-col h-full">
       <Menu />
       <MakeTree />
     </div>

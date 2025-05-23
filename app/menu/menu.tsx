@@ -58,27 +58,23 @@ export default function Menu() {
   }, [communityInfo, userInfo, submit]);
 
   return (
-    <div className="card bg-base-200 max-w-[200px] w-[200px] overflow-hidden m-4 p-4 flex flex-col items-center justify-between">
-      <div className="w-full flex flex-col items-center grow">
-        {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
-        <div className="divider text-xs">Airdrops</div>
-        <button className="btn btn-accent w-full" onClick={handleCreateAirdrop}>Airdrops</button>
+    <div className="card bg-base-200 m-4 p-3 grid grid-cols-3 gap-2">
+      {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
+      <div className="flex flex-row items-center justify-center gap-2">
+        <button className="btn btn-accent" onClick={handleCreateAirdrop}>Airdrops</button>
         {isAdmin && (<>
-          <div className="divider text-xs">Admin</div>
-          <button className="btn btn-accent w-full" onClick={handleCreateAirdrop}>Create Airdrop</button>
+          <button className="btn btn-accent" onClick={handleCreateAirdrop}>Create Airdrop</button>
         </>)}
       </div>
-      <div className="w-full flex flex-col items-start grow-0">
-        {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
-      </div>
+      {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
     </div>
   );
 }
 
 function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponsePayload }) {
   return (
-    <div className="w-full flex flex-col items-center">
-      {communityInfo.smallLogoUrl && <div className="avatar mb-2">
+    <div className="flex flex-row items-center gap-2">
+      {communityInfo.smallLogoUrl && <div className="avatar">
         <div className="w-14 rounded-xl">
           <img src={communityInfo.smallLogoUrl} />
         </div>
@@ -90,7 +86,7 @@ function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponse
 
 function UserInfo({ userInfo, isAdmin }: { userInfo: UserInfoResponsePayload, isAdmin: boolean }) {
   return (
-    <div className="w-full flex flex-row items-center gap-2">
+    <div className="flex flex-row items-center justify-end gap-2">
       {userInfo.imageUrl && <div className="avatar avatar-online indicator">
         <div className="w-8 rounded-full">
           <img src={userInfo.imageUrl} />
