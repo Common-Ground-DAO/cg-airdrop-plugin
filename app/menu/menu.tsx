@@ -9,7 +9,7 @@ export default function Menu() {
 
   return (
     <div className="card bg-base-300 m-4 p-3 grid grid-cols-2 gap-2">
-      <div className="flex flex-row items-center justify-start gap-6">
+      <div className="flex flex-row items-center justify-start gap-4">
         {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
         <NavLink to="/" className="link link-neutral">Airdrops</NavLink>
         {isAdmin && (<>
@@ -18,7 +18,6 @@ export default function Menu() {
       </div>
       <div className="flex flex-row items-center justify-end gap-2">
         <WalletConnect />
-        {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
       </div>
     </div>
   );
@@ -51,8 +50,10 @@ function UserInfo({ userInfo, isAdmin }: { userInfo: UserInfoResponsePayload, is
 
 function WalletConnect() {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
+  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+
+  const installedWallets = connectors.filter(c => c.type === "injected");
 
   if (isConnected) {
     return (
@@ -65,12 +66,25 @@ function WalletConnect() {
     );
   }
 
-  return (
+  return (<>
     <button
-      className="btn btn-secondary"
-      onClick={() => connect({ connector: injected() })}
+      className="btn btn-sm btn-secondary"
+      onClick={() => (document.getElementById('my_modal_2') as any)?.showModal()}
     >
       Connect Wallet
     </button>
-  );
+    <dialog id="my_modal_2" className="modal">
+      <div className="modal-box flex flex-col gap-2 w-sm">
+        <b>Choose a wallet to connect</b>
+        {installedWallets.map(c => (
+          <button key={c.id} className="btn btn-secondary w-full" onClick={() => connect({ connector: c })}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
+  </>);
 }
