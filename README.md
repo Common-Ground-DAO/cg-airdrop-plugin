@@ -1,87 +1,117 @@
-# Welcome to React Router!
+# CG Airdrop Plugin
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+A web application for creating and managing token airdrops with merkle tree distribution. Upload CSV files with recipient addresses and amounts, generate merkle trees, deploy smart contracts, and manage airdrop data.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- **CSV Upload**: Upload recipient lists with addresses and token amounts
+- **Merkle Tree Generation**: Generate cryptographic merkle trees for efficient airdrop distribution
+- **Smart Contract Deployment**: Deploy AirdropClaim contracts with merkle root verification
+- **Wallet Integration**: Connect MetaMask or other Web3 wallets using wagmi
+- **Database Management**: Store and manage airdrop metadata with Prisma and SQLite
+- **API Routes**: RESTful API endpoints for airdrop operations
 
-## Getting Started
+## Tech Stack
 
-### Installation
+- **Frontend**: React 19, React Router 7, TypeScript, TailwindCSS, DaisyUI
+- **Backend**: React Router 7 API routes, Prisma ORM, SQLite
+- **Blockchain**: Hardhat, ethers.js, wagmi, viem, OpenZeppelin contracts
+- **Build**: Vite, TypeScript
 
-Install the dependencies:
+## Setup
 
+### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### Development
+### 2. Generate Contract Types
+```bash
+npm run generate-types
+```
+This compiles Solidity contracts and generates TypeScript types.
 
-Start the development server with HMR:
+### 3. Setup Database
+```bash
+npm run prisma:migrate
+```
+This creates the SQLite database and applies migrations.
 
+### 4. Generate Prisma Client
+```bash
+npm run prisma:generate
+```
+This generates the Prisma client for database operations.
+
+### 5. Start Development Server
 ```bash
 npm run dev
 ```
+The app will be available at `http://localhost:5173`
 
-Your application will be available at `http://localhost:5173`.
+## Available Commands
 
-## Building for Production
+### Development
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run typecheck` - Run TypeScript type checking
 
-Create a production build:
+### Smart Contracts
+- `npm run compile-contracts` - Compile Solidity contracts with Hardhat
+- `npm run generate-types` - Compile contracts and generate TypeScript types
 
-```bash
-npm run build
+### Database
+- `npm run prisma:generate` - Generate Prisma client
+- `npm run prisma:migrate` - Create and apply new migration
+- `npm run prisma:reset` - Reset database and reapply all migrations
+- `npm run prisma:deploy` - Apply pending migrations (production)
+- `npm run prisma:studio` - Open Prisma Studio GUI at `http://localhost:5555`
+- `npm run db:seed` - Run database seeds
+
+## Usage
+
+1. **Connect Wallet**: Click "Connect Wallet" to connect your Web3 wallet
+2. **Upload CSV**: Upload a CSV file with columns `address` and `amount`
+3. **Generate Tree**: The app automatically generates a merkle tree from your data
+4. **Deploy Contract**: Enter a token contract address and deploy the AirdropClaim contract
+5. **Manage Airdrops**: Use the API to create and manage airdrop records in the database
+
+## CSV Format
+
+Your CSV file should have these columns:
+```csv
+address,amount
+0x1234567890123456789012345678901234567890,1000000000000000000
+0xabcdefabcdefabcdefabcdefabcdefabcdefabcd,500000000000000000
 ```
 
-## Deployment
+Amounts should be in wei (smallest token unit).
 
-### Docker Deployment
+## Smart Contracts
 
-To build and run using Docker:
+- **AirdropClaim.sol**: Main contract for token distribution using merkle proofs
+- **MockToken.sol**: ERC20 token for testing
 
-```bash
-docker build -t my-app .
+Recipients can claim tokens by providing their merkle proof to the deployed contract.
 
-# Run the container
-docker run -p 3000:3000 my-app
-```
+## API Endpoints
 
-The containerized application can be deployed to any platform that supports Docker, including:
+- `POST /api/airdrops` - Create new airdrop record
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+## Project Structure
 
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+├── app/                 # React Router 7 application
+│   ├── routes/         # Route handlers and API endpoints
+│   ├── maketree/       # Merkle tree generation UI
+│   └── menu/           # Navigation components
+├── contracts/          # Solidity smart contracts
+├── prisma/             # Database schema and migrations
+└── generated/          # Generated Prisma client and contract types
 ```
 
-## Styling
+## Available Scripts
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+- `npm run dev` - Start the development server with HMR
+- `npm run build`
