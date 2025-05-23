@@ -3,7 +3,8 @@ import { type RouteConfig, index, route, layout } from "@react-router/dev/routes
 export default [
     layout("routes/_layout.tsx", [
         index("routes/_index.tsx"),
-        route("create", "routes/create.tsx"),
+        route("airdrop/view/:airdropId", "routes/airdrop.view.tsx"),
+        route("airdrop/create", "routes/airdrop.create.tsx"),
     ]),
     route("api/sign", "routes/api.sign.tsx"),
     route("api/airdrop/create", "routes/api.airdrop.create.tsx"),

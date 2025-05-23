@@ -1,6 +1,6 @@
 // types for later imports, to improve code splitting
 import type { StandardMerkleTree } from "@openzeppelin/merkle-tree";
-import type { AirdropClaim__factory } from "../contracts/factories/contracts/AirdropClaim__factory";
+import type { AirdropClaim__factory } from "../../contracts/factories/contracts/AirdropClaim__factory";
 
 import { useCallback, useEffect, useState } from "react";
 import { useAccount, useDeployContract, useReadContract } from "wagmi";
@@ -107,7 +107,7 @@ export default function MakeTree() {
   } = useDeployContract();
 
   const getAirdropClaimFactory = async () => {
-    const { AirdropClaim__factory } = await import("../contracts/factories/contracts/AirdropClaim__factory");
+    const { AirdropClaim__factory } = await import("../../contracts/factories/contracts/AirdropClaim__factory");
     return AirdropClaim__factory;
   }
 

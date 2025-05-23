@@ -8,13 +8,9 @@ export default function Menu() {
   const { userInfo, communityInfo, isAdmin } = useCgData();
 
   return (
-    <div className="card bg-base-300 m-4 p-3 grid grid-cols-2 gap-2">
-      <div className="flex flex-row items-center justify-start gap-4">
+    <div className="bg-base-300 mb-4 p-3 grid grid-cols-2 gap-2">
+      <div className="flex flex-row items-center justify-start gap-3">
         {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
-        <NavLink to="/" className="link link-neutral">Airdrops</NavLink>
-        {isAdmin && (<>
-          <NavLink to="/create" className="link link-neutral">Create Airdrop</NavLink>
-        </>)}
       </div>
       <div className="flex flex-row items-center justify-end gap-2">
         <WalletConnect />
@@ -24,15 +20,18 @@ export default function Menu() {
 }
 
 function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponsePayload }) {
-  if (!communityInfo.smallLogoUrl && !communityInfo.largeLogoUrl) return null;
+  if (!communityInfo.smallLogoUrl && !communityInfo.largeLogoUrl && !communityInfo.title) return null;
 
-  return (
+  return (<>
     <div className="avatar">
       <div className="w-10 rounded-xl">
         <img src={communityInfo.smallLogoUrl || communityInfo.largeLogoUrl} />
       </div>
     </div>
-  )
+    <div className="text-xl font-bold">
+      {communityInfo.title}
+    </div>
+  </>)
 }
 
 function UserInfo({ userInfo, isAdmin }: { userInfo: UserInfoResponsePayload, isAdmin: boolean }) {

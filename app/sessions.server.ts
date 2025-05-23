@@ -23,7 +23,7 @@ const { getSession, commitSession, destroySession } =
         // expires: new Date(Date.now() + 60_000),
         httpOnly: true,
         maxAge: 21600, // 6 hours
-        path: import.meta.env.DEV ? "/" : "/airdrop-manager",
+        path: import.meta.env.DEV ? "/" : "/cg-airdrop-plugin",
         sameSite: "lax",
         secrets: [process.env.COOKIE_SECRET!],
         secure: true,
