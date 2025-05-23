@@ -1,9 +1,23 @@
-import { useState } from "react";
+import type { UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
+import { useEffect, useState } from "react";
 import { Form, useSubmit } from "react-router";
+import { useCgPluginLib } from "~/hooks";
 
 export default function Menu() {
   const [isCreatingAirdrop, setIsCreatingAirdrop] = useState(false);
   const submit = useSubmit();
+  const cgPluginLib = useCgPluginLib();
+  const [userInfo, setUserInfo] = useState<UserInfoResponsePayload | null>(null);
+
+  useEffect(() => {
+    if (cgPluginLib) {
+      console.log("Getting user data");
+      cgPluginLib.getUserInfo().then(payload => {
+        console.log("Got user data payload", payload);
+        setUserInfo(payload.data);
+      });
+    }
+  }, [cgPluginLib]);
 
   const handleCreateAirdrop = () => {
     setIsCreatingAirdrop(true);
