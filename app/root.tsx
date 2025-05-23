@@ -11,6 +11,8 @@ import { mainnet } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./app.css";
+import { CgPluginLibProvider } from "./context/plugin_lib";
+import { CgDataProvider } from "./context/cg_data";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -56,13 +58,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200" data-theme="silk">
-          <Outlet />
-        </div>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <CgPluginLibProvider>
+      <CgDataProvider>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200" data-theme="silk">
+              <Outlet />
+            </div>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </CgDataProvider>
+    </CgPluginLibProvider>
   );
 }
 

@@ -3,8 +3,9 @@ import type { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { AirdropClaim__factory } from "../contracts/factories/contracts/AirdropClaim__factory";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAccount, useConnect, useDisconnect, useDeployContract, useReadContract } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { useAccount, useDeployContract, useReadContract } from "wagmi";
+import { useSubmit } from "react-router";
+import { useCgData } from "~/context/cg_data";
 
 declare global {
   interface Window {
@@ -72,6 +73,30 @@ export default function MakeTree() {
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string | null>(null);
   const [abi, setAbi] = useState<typeof AirdropClaim__factory.abi | null>(null);
+  const { userInfo, communityInfo } = useCgData();
+  const submit = useSubmit();
+
+  const handleCreateAirdrop = useCallback(() => {
+    if (!communityInfo || !userInfo) return;
+    
+    const formData = new FormData();
+    formData.append("name", "Test Airdrop");
+    formData.append("creatorId", userInfo.id);
+    formData.append("communityId", communityInfo.id);
+    formData.append("contract", "0x0000000000000000000000000000000000000000");
+    formData.append("items", JSON.stringify([
+      {
+        address: "0x0000000000000000000000000000000000000000",
+        amount: "100",
+      }, 
+      {
+        address: "0x0000000000000000000000000000000000000001",
+        amount: "200",
+      }
+    ]));
+
+    submit(formData, { method: "post", action: "/api/airdrops", navigate: false });
+  }, [communityInfo, userInfo, submit]);
 
   const { address, isConnected } = useAccount();
   const { 
