@@ -1,5 +1,5 @@
-import type { UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
-import { useEffect, useState } from "react";
+import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
+import { useEffect, useMemo, useState } from "react";
 import { Form, useSubmit } from "react-router";
 import { useCgPluginLib } from "~/hooks";
 
@@ -8,6 +8,8 @@ export default function Menu() {
   const submit = useSubmit();
   const cgPluginLib = useCgPluginLib();
   const [userInfo, setUserInfo] = useState<UserInfoResponsePayload | null>(null);
+  const [communityInfo, setCommunityInfo] = useState<CommunityInfoResponsePayload | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (cgPluginLib) {
@@ -16,8 +18,21 @@ export default function Menu() {
         console.log("Got user data payload", payload);
         setUserInfo(payload.data);
       });
+      cgPluginLib.getCommunityInfo().then(payload => {
+        console.log("Got community data payload", payload);
+        setCommunityInfo(payload.data);
+      });
     }
   }, [cgPluginLib]);
+
+  useEffect(() => {
+    if (!!userInfo && !!communityInfo) {
+      const adminRole = communityInfo.roles.find(role => role.title === "Admin" && role.type === "PREDEFINED");
+      if (!!adminRole && userInfo.roles.includes(adminRole.id)) {
+        setIsAdmin(true);
+      }
+    }
+  }, [userInfo, communityInfo]);
 
   const handleCreateAirdrop = () => {
     setIsCreatingAirdrop(true);
@@ -41,15 +56,27 @@ export default function Menu() {
     submit(formData, { method: "post", action: "/api/airdrops", navigate: false });
   };
 
+  const userComponent = useMemo(() => {
+    if (!userInfo) return null;
+
+    return (
+      <div className="flex flex-col gap-2">
+        {!!userInfo.imageUrl && <div className="avatar">
+          <div className="w-24 rounded-full">
+            <img src={userInfo.imageUrl} />
+          </div>
+        </div>}
+        {!!userInfo.name && <div className="text-sm">Welcome, {userInfo.name}</div>}
+        {isAdmin && <div className="text-sm">You are an admin</div>}
+      </div>
+    )
+  }, [userInfo, isAdmin]);
+
   return (
     <div className="flex flex-col gap-4 max-w-[200px] w-[200px] overflow-hidden">
-      {/* <div className="avatar">
-        <div className="w-24 rounded-full">
-          <img src="/logo.png" />
-        </div>
-      </div> */}
+      {userComponent}
       <div className="flex flex-col gap-2">
-        <button className="btn btn-primary" onClick={handleCreateAirdrop}>Create Airdrop</button>
+        {isAdmin && <button className="btn btn-primary" onClick={handleCreateAirdrop}>Create Airdrop</button>}
       </div>
     </div>
   );
