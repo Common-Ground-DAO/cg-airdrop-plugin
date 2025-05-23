@@ -1,5 +1,5 @@
 import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Form, useSubmit } from "react-router";
 import { useCgPluginLib } from "~/hooks";
 
@@ -34,13 +34,14 @@ export default function Menu() {
     }
   }, [userInfo, communityInfo]);
 
-  const handleCreateAirdrop = () => {
+  const handleCreateAirdrop = useCallback(() => {
+    if (!communityInfo || !userInfo) return;
     setIsCreatingAirdrop(true);
     
     const formData = new FormData();
     formData.append("name", "Test Airdrop");
-    formData.append("creatorId", "1");
-    formData.append("communityId", "1");
+    formData.append("creatorId", userInfo.id);
+    formData.append("communityId", communityInfo.id);
     formData.append("contract", "0x0000000000000000000000000000000000000000");
     formData.append("items", JSON.stringify([
       {
@@ -54,30 +55,48 @@ export default function Menu() {
     ]));
 
     submit(formData, { method: "post", action: "/api/airdrops", navigate: false });
-  };
-
-  const userComponent = useMemo(() => {
-    if (!userInfo) return null;
-
-    return (
-      <div className="card bg-base-300 p-4">
-        {!!userInfo.imageUrl && <div className="avatar">
-          <div className="w-24 rounded-full">
-            <img src={userInfo.imageUrl} />
-          </div>
-        </div>}
-        {!!userInfo.name && <div className="text-sm">Welcome, {userInfo.name}</div>}
-        {isAdmin && <div className="text-sm">You are an admin</div>}
-      </div>
-    )
-  }, [userInfo, isAdmin]);
+  }, [communityInfo, userInfo, submit]);
 
   return (
-    <div className="card bg-base-200 max-w-[200px] w-[200px] overflow-hidden m-4 p-4">
-      {userComponent}
-      {isAdmin && (
-        <button className="btn btn-primary" onClick={handleCreateAirdrop}>Create Airdrop</button>
-      )}
+    <div className="card bg-base-200 max-w-[200px] w-[200px] overflow-hidden m-4 p-4 flex flex-col items-center justify-between">
+      <div className="w-full flex flex-col items-center grow">
+        {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
+        <div className="divider text-xs">Airdrops</div>
+        <button className="btn btn-accent w-full" onClick={handleCreateAirdrop}>Airdrops</button>
+        {isAdmin && (<>
+          <div className="divider text-xs">Admin</div>
+          <button className="btn btn-accent w-full" onClick={handleCreateAirdrop}>Create Airdrop</button>
+        </>)}
+      </div>
+      <div className="w-full flex flex-col items-start grow-0">
+        {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
+      </div>
     </div>
   );
+}
+
+function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponsePayload }) {
+  return (
+    <div className="w-full flex flex-col items-center">
+      {communityInfo.smallLogoUrl && <div className="avatar mb-2">
+        <div className="w-14 rounded-xl">
+          <img src={communityInfo.smallLogoUrl} />
+        </div>
+      </div>}
+      {communityInfo.title && <div className="text-lg">{communityInfo.title}</div>}
+    </div>
+  )
+}
+
+function UserInfo({ userInfo, isAdmin }: { userInfo: UserInfoResponsePayload, isAdmin: boolean }) {
+  return (
+    <div className="w-full flex flex-row items-center gap-2">
+      {userInfo.imageUrl && <div className="avatar avatar-online indicator">
+        <div className="w-8 rounded-full">
+          <img src={userInfo.imageUrl} />
+        </div>
+      </div>}
+      {userInfo.name && <div className="text-lg">{userInfo.name}</div>}
+    </div>
+  )
 }
