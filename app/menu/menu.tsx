@@ -61,9 +61,9 @@ export default function Menu() {
     <div className="card bg-base-200 m-4 p-3 grid grid-cols-3 gap-2">
       {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
       <div className="flex flex-row items-center justify-center gap-2">
-        <button className="btn btn-accent" onClick={handleCreateAirdrop}>Airdrops</button>
+        <button className="btn btn-accent btn-sm rounded-full" onClick={handleCreateAirdrop}>Airdrops</button>
         {isAdmin && (<>
-          <button className="btn btn-accent" onClick={handleCreateAirdrop}>Create Airdrop</button>
+          <button className="btn btn-accent btn-sm rounded-full" onClick={handleCreateAirdrop}>Create Airdrop</button>
         </>)}
       </div>
       {!!userInfo && <UserInfo userInfo={userInfo} isAdmin={isAdmin} />}
@@ -75,7 +75,7 @@ function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponse
   return (
     <div className="flex flex-row items-center gap-2">
       {communityInfo.smallLogoUrl && <div className="avatar">
-        <div className="w-14 rounded-xl">
+        <div className="w-10 rounded-xl">
           <img src={communityInfo.smallLogoUrl} />
         </div>
       </div>}
