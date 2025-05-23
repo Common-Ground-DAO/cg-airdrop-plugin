@@ -60,7 +60,7 @@ export default function Menu() {
     if (!userInfo) return null;
 
     return (
-      <div className="flex flex-col gap-2">
+      <div className="card bg-base-300 p-4">
         {!!userInfo.imageUrl && <div className="avatar">
           <div className="w-24 rounded-full">
             <img src={userInfo.imageUrl} />
@@ -73,11 +73,11 @@ export default function Menu() {
   }, [userInfo, isAdmin]);
 
   return (
-    <div className="flex flex-col gap-4 max-w-[200px] w-[200px] overflow-hidden">
+    <div className="card bg-base-200 max-w-[200px] w-[200px] overflow-hidden m-4 p-4">
       {userComponent}
-      <div className="flex flex-col gap-2">
-        {isAdmin && <button className="btn btn-primary" onClick={handleCreateAirdrop}>Create Airdrop</button>}
-      </div>
+      {isAdmin && (
+        <button className="btn btn-primary" onClick={handleCreateAirdrop}>Create Airdrop</button>
+      )}
     </div>
   );
 }
