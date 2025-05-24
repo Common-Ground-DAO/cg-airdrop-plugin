@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropContractFactory, useErc20Abi, useErc20ContractFactory } from "~/hooks/contractFactories";
@@ -6,10 +6,12 @@ import CsvUploadButton, { type CsvUploadResult } from "../csv-upload-button/csv-
 import { useAccount, useReadContract } from "wagmi";
 
 interface AirdropData {
-  name: string;
-  contract: string;
-  decimals: number;
+  name?: string;
+  contractAddress?: `0x${string}`;
+  decimals?: number;
 }
+
+const addressRegex = /^(0x)?[0-9a-fA-F]{40}$/;
 
 export default function AirdropView() {
   const [step, setStep] = useState(0);
@@ -17,7 +19,7 @@ export default function AirdropView() {
   const submit = useSubmit();
   const factory = useAirdropContractFactory();
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
-  const [airdropData, setAirdropData] = useState<AirdropData | null>(null);
+  const [airdropData, setAirdropData] = useState<AirdropData>({});
   const [erc20abi, setErc20Abi] = useState<any[]>([]);
   const airdropContractFactory = useAirdropContractFactory();
 
@@ -56,36 +58,60 @@ export default function AirdropView() {
         <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Set up airdrop</li>
         <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy Contract</li>
       </ul>
-      {step === 0 && <AirdropSetupStepOne airdropData={airdropData} setAirdropData={setAirdropData} />}
+      {step === 0 && <AirdropSetupStepOne airdropData={airdropData} setAirdropData={setAirdropData} setStep={setStep} />}
       {step === 1 && <AirdropSetupStepTwo csvResult={csvResult!} setStep={setStep} handleCsvUpload={handleCsvUpload} />}
     </div>
   );
 }
 
 interface StepOneProps {
-  airdropData: AirdropData | null;
-  setAirdropData: React.Dispatch<React.SetStateAction<AirdropData | null>>;
+  airdropData: AirdropData;
+  setAirdropData: React.Dispatch<React.SetStateAction<AirdropData>>;
+  setStep: React.Dispatch<React.SetStateAction<number>>;
 }
 
 interface StepTwoProps {
   csvResult: CsvUploadResult | null;
   handleCsvUpload: (result: CsvUploadResult) => void;
-  setStep: (step: number) => void;
+  setStep: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const AirdropSetupStepOne = ({ airdropData, setAirdropData }: StepOneProps) => {
-  const [erc20Address, setErc20Address] = useState<string | null>(null);
+const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOneProps) => {
   const { address, isConnected, chain, connector } = useAccount();
   const erc20abi = useErc20Abi();
+  const [addressWarning, setAddressWarning] = useState<string | null>(null);
+  const [validAddress, setValidAddress] = useState<`0x${string}` | undefined>(undefined);
+
+  const setAddress = useCallback((value: string) => {
+    value = value.trim();
+    if (!addressRegex.test(value)) {
+      setValidAddress(undefined);
+      setAddressWarning("Invalid address");
+    } else {
+      setValidAddress(value as `0x${string}`);
+      setAddressWarning(null);
+    }
+    setAirdropData(old => ({ ...old, contractAddress: value as `0x${string}` }));
+  }, [airdropData, setAirdropData]);
 
   const { data: decimals, isFetching, isLoading, isPending, error } = useReadContract({
-    address: erc20Address as `0x${string}`,
+    address: validAddress,
     abi: erc20abi || [],
     functionName: "decimals",
   });
   console.log("decimals", decimals, isFetching, isLoading, isPending);
 
-  return <div className="flex flex-col gap-4 max-w-sm">
+  useEffect(() => {
+    if (typeof decimals === "number") {
+      setAirdropData(old => ({ ...old, decimals }));
+    }
+  }, [decimals]);
+
+  const canProceed = useMemo(() => {
+    return !!airdropData.name && !!airdropData.contractAddress && typeof airdropData.decimals === "number";
+  }, [airdropData]);
+
+  return <div className="flex flex-col gap-4 max-w-md w-md">
     <h2 className="text-lg font-bold">Set up airdrop</h2>
     <p>Set up the airdrop details.</p>
     {!isConnected && <div className="alert alert-error">
@@ -95,14 +121,28 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData }: StepOneProps) => {
       </div>
     </div>}
     {isConnected && <>
-      <div className="flex flex-col gap-2">
-        <label htmlFor="erc20Address">ERC20 Address</label>
-        <input type="text" id="erc20Address" value={erc20Address || ''} onChange={(e) => setErc20Address(e.target.value)} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <label htmlFor="decimals">Decimals</label>
-        <input type="text" id="decimals" value={error ? "Error" : isLoading ? "Loading..." : decimals?.toString() || ""} />
-      </div>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Airdrop Title</legend>
+        <input
+          type="text"
+          className="input w-full"
+          id="name"
+          value={airdropData.name || ''}
+          onChange={(e) => setAirdropData(old => ({ ...old, name: e.target.value }))}
+        />
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">ERC20 Contract Address</legend>
+        <input
+          type="text"
+          className="input w-full"
+          id="erc20Address"
+          value={airdropData.contractAddress || ''}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+        {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}
+      </fieldset>
+      {canProceed && <button className="btn btn-primary" onClick={() => setStep(1)}>Next</button>}
     </>}
   </div>;
 };
