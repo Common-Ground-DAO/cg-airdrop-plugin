@@ -1,11 +1,9 @@
 import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router";
-import { injected, useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 
 export default function Header() {
-  const { userInfo, communityInfo, isAdmin } = useCgData();
+  const { communityInfo } = useCgData();
 
   return (
     <div className="p-4 grid grid-cols-2 gap-2">
@@ -32,19 +30,6 @@ function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponse
       {communityInfo.title}
     </div>
   </>)
-}
-
-function UserInfo({ userInfo, isAdmin }: { userInfo: UserInfoResponsePayload, isAdmin: boolean }) {
-  if (!userInfo.imageUrl && !userInfo.name) return null;
-
-  return (<div className="card flex flex-row items-center gap-2 p-2 rounded-full">
-    {userInfo.imageUrl && <div className="avatar avatar-online indicator">
-      <div className="w-8 rounded-full">
-        <img src={userInfo.imageUrl} />
-      </div>
-    </div>}
-    {userInfo.name && <div className="pr-1">{userInfo.name}</div>}
-  </div>)
 }
 
 function WalletConnect() {

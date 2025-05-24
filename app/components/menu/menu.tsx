@@ -7,7 +7,7 @@ export default function Menu() {
     const { isAdmin } = useCgData();
 
     return (
-        <ul className="menu bg-base-100 w-56 p-2 rounded-box self-start">
+        <ul className="menu bg-base-100 w-56 p-2 rounded-box self-start gap-1">
             <li>
                 <NavLink
                     to="/"

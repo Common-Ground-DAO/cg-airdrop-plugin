@@ -22,6 +22,8 @@ model Airdrop {
   contract    String
   createdAt   DateTime @default(now())
   items       AirdropItem[]
+
+  @@index(fields: [communityId])
 }
 
 model AirdropItem {
@@ -31,4 +33,6 @@ model AirdropItem {
   airdropId   Int
 
   @@id([address, airdropId])
+  @@index(fields: [airdropId])
+  @@index(fields: [address])
 }
