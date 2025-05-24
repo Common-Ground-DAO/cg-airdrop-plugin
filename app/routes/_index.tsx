@@ -10,8 +10,8 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Index() {
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-6">Welcome to Airdrop Manager</h1>
+    <div className="pt-2 px-8 pb-4">
+      <h1 className="text-3xl font-bold mb-6">Airdrops</h1>
       <div className="bg-base-100 rounded-lg p-6">
         <NavLink to="/airdrop/create" className="btn btn-primary">Create Airdrop</NavLink>
       </div>

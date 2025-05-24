@@ -4,11 +4,11 @@ import { NavLink } from "react-router";
 import { injected, useAccount, useConnect, useDisconnect } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 
-export default function Menu() {
+export default function Header() {
   const { userInfo, communityInfo, isAdmin } = useCgData();
 
   return (
-    <div className="bg-base-300 mb-4 p-3 grid grid-cols-2 gap-2">
+    <div className="p-4 grid grid-cols-2 gap-2">
       <div className="flex flex-row items-center justify-start gap-3">
         {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
       </div>
@@ -67,7 +67,7 @@ function WalletConnect() {
 
   return (<>
     <button
-      className="btn btn-sm btn-secondary"
+      className="btn btn-sm btn-primary"
       onClick={() => (document.getElementById('my_modal_2') as any)?.showModal()}
     >
       Connect Wallet
@@ -76,7 +76,7 @@ function WalletConnect() {
       <div className="modal-box flex flex-col gap-2 w-sm">
         <b>Choose a wallet to connect</b>
         {installedWallets.map(c => (
-          <button key={c.id} className="btn btn-secondary w-full" onClick={() => connect({ connector: c })}>
+          <button key={c.id} className="btn btn-primary w-full" onClick={() => connect({ connector: c })}>
             {c.name}
           </button>
         ))}
