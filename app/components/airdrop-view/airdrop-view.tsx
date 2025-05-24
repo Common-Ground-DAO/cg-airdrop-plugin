@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import { NavLink, useFetcher } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import type { Airdrop, AirdropItem } from "generated/prisma";
 import { IoArrowBack, IoChevronForward } from "react-icons/io5";
 
-export default function AirdropView() {
+export default function AirdropView({ airdropId }: { airdropId?: number }) {
   const { communityInfo } = useCgData();
   const airdropFetcher = useFetcher<Airdrop[]>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [airdropId, setAirdropId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!communityInfo) return;
@@ -21,51 +20,47 @@ export default function AirdropView() {
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshTrigger(i => i + 1);
-    }, 5_000);
+      if (!import.meta.env.VITE_AIRDROP_REFRESH_INTERVAL) {
+        console.warn("VITE_AIRDROP_REFRESH_INTERVAL is not set, using default of 60000ms");
+      }
+    }, parseInt(import.meta.env.VITE_AIRDROP_REFRESH_INTERVAL || "60000"));
     return () => clearInterval(interval);
   }, []);
 
   const airdrop = useMemo(() => {
-    if (!airdropFetcher.data || airdropId === null) return null;
+    if (!airdropFetcher.data || airdropId === undefined) return null;
     return airdropFetcher.data.find(a => a.id === airdropId);
   }, [airdropFetcher.data, airdropId]);
 
   return (
     <div className="px-8 pb-4">
-      {!airdrop && <AirdropList
-        airdrops={airdropFetcher.data}
-        setAirdropId={setAirdropId}
-      />}
-      {!!airdrop && <AirdropDetailView
-        airdrop={airdrop}
-        setAirdropId={setAirdropId}
-      />}
+      {!airdrop && <AirdropList airdrops={airdropFetcher.data} />}
+      {!!airdrop && <AirdropDetailView airdrop={airdrop} />}
     </div>
   );
 }
 
 function AirdropList({
   airdrops,
-  setAirdropId,
 }: {
   airdrops?: Airdrop[],
-  setAirdropId: (id: number | null) => void,
 }) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold mb-6">Airdrops</h1>
-      {!!airdrops && airdrops.map((airdrop) => (
-        <div
+      {!!airdrops && airdrops.length > 0 && airdrops.map((airdrop) => (
+        <NavLink
           key={airdrop.id}
-          onClick={() => setAirdropId(airdrop.id)}
+          to={`/${airdrop.id}`}
           className="card bg-base-100 w-full p-4 cursor-pointer flex flex-row gap-4 items-center"
         >
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-bold">{airdrop.name}</h2>
           </div>
           <IoChevronForward className="ml-auto" />
-        </div>
+        </NavLink>
       ))}
+      {!!airdrops && airdrops.length === 0 && <div>No airdrops found for this community :(</div>}
       {!airdrops && <div>Loading...</div>}
     </div>
   );
@@ -73,10 +68,8 @@ function AirdropList({
 
 function AirdropDetailView({
   airdrop,
-  setAirdropId,
 }: {
   airdrop: Airdrop,
-  setAirdropId: (id: number | null) => void,
 }) {
   const airdropItemsFetcher = useFetcher<AirdropItem[]>();
 
@@ -86,10 +79,10 @@ function AirdropDetailView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4 items-center">
-        <button onClick={() => setAirdropId(null)} className="btn btn-ghost btn-circle">
+      <div className="flex flex-row gap-1 items-center">
+        <NavLink to="/" className="btn btn-ghost btn-circle">
           <IoArrowBack className="w-4 h-4" />
-        </button>
+        </NavLink>
         <h1 className="text-3xl font-bold">{airdrop.name}</h1>
       </div>
       <div className="flex flex-col gap-4">
@@ -110,6 +103,8 @@ function AirdropDetailView({
             ))}
           </tbody>
         </table>}
+        {!airdropItemsFetcher.data && <div>Loading...</div>}
+        {airdropItemsFetcher.data && airdropItemsFetcher.data.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export default function Menu() {
             </li>
             {isAdmin && <li>
                 <NavLink
-                    to="/airdrop/create"
+                    to="/create-airdrop"
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <IoAddCircleOutline />

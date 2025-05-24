@@ -7,6 +7,6 @@ export function meta() {
   ];
 }
 
-export default function AirdropCreateRoute() {
+export default function CreateAirdrop() {
   return <AirdropCreate />;
 } 
