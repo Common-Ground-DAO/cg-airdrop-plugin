@@ -1,4 +1,4 @@
-import AirdropCreateView from "../components/airdrop-create/airdrop-create";
+import AirdropCreate from "../components/airdrop-create/airdrop-create";
 
 export function meta() {
   return [
@@ -7,6 +7,6 @@ export function meta() {
   ];
 }
 
-export default function AirdropCreate() {
-  return <AirdropCreateView />;
+export default function AirdropCreateRoute() {
+  return <AirdropCreate />;
 } 
