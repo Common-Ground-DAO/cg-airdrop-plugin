@@ -15,22 +15,25 @@ datasource db {
 }
 
 model Airdrop {
-  id          Int @id @default(autoincrement())
-  name        String
-  creatorId   String
-  communityId String
-  contract    String
-  createdAt   DateTime @default(now())
-  items       AirdropItem[]
+  id               Int @id @default(autoincrement())
+  name             String
+  creatorId        String
+  communityId      String
+  airdropAddress   String
+  erc20Address     String
+  chainName        String
+  chainId          Int
+  createdAt        DateTime @default(now())
+  items            AirdropItem[]
 
   @@index(fields: [communityId])
 }
 
 model AirdropItem {
-  address     String
-  amount      String
-  airdrop     Airdrop @relation(fields: [airdropId], references: [id])
-  airdropId   Int
+  address          String
+  amount           String
+  airdrop          Airdrop @relation(fields: [airdropId], references: [id])
+  airdropId        Int
 
   @@id([address, airdropId])
   @@index(fields: [airdropId])

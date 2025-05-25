@@ -41,8 +41,8 @@ function WalletConnect() {
 
   if (isConnected) {
     return (
-      <div className="flex flex-row items-center">
-        <p className="font-mono text-sm mb-2">Connected: {address}</p>
+      <div className="flex flex-row items-center gap-2">
+        <p className="font-mono text-xs">Connected: {!address ? "Unknown" : `${address.slice(0, 6)}...${address.slice(-4)}`}</p>
         <button className="btn btn-sm btn-outline" onClick={() => disconnect()}>
           Disconnect
         </button>
