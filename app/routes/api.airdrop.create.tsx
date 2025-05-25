@@ -32,5 +32,5 @@ export async function action({ request }: { request: Request }) {
     }
   });
 
-  return redirect(`/${airdropId}`);
+  return ({ airdropId });
 } 

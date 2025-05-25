@@ -13,7 +13,7 @@ interface StepTwoProps {
 const AirdropSetupStepTwo = ({ csvResult, handleCsvUpload, setStep, airdropData }: StepTwoProps) => {
   return <div className="h-full flex flex-col items-center">
     <div className="flex flex-col mb-4 items-center max-w-md">
-      {!csvResult && <><p className="text-xs text-gray-500">Decimals detected from contract: {airdropData.decimals || "unknown. This means something went wrong with the contract."}</p>
+      {!csvResult && <>
         <p>Upload a CSV file to get started. It must contain address and uint256 values and has to be formatted like this:</p>
         <div className="card font-mono p-2 my-4 bg-white text-black text-sm whitespace-nowrap">
           "address","amount"<br />

@@ -1,11 +1,13 @@
 import React, { useCallback, useState } from "react";
-import { useSubmit } from "react-router";
+import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropContractFactory } from "~/hooks/contractFactories";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TokenInfo } from ".";
+import { CgSpinner } from "react-icons/cg";
+import { FaCheck } from "react-icons/fa6";
 
 interface StepThreeProps {
   airdropData: AirdropData;
@@ -14,10 +16,11 @@ interface StepThreeProps {
 }
 
 const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreeProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { communityInfo, userInfo } = useCgData();
   const submit = useSubmit();
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
   const factory = useAirdropContractFactory();
   const {
     deployContract,
@@ -61,13 +64,10 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
     ));
 
     try {
-      setIsSubmitting(true);
-      await submit(formData, { method: "post", action: "/api/airdrop/create", navigate: false });
+      await fetcher.submit(formData, { method: "post", action: "/api/airdrop/create" });
     } catch (error) {
       console.error("Error submitting airdrop to database", error);
       setError("Error submitting airdrop to database");
-    } finally {
-      setIsSubmitting(false);
     }
   }, [communityInfo, userInfo, submit, airdropData, csvResult]);
 
@@ -80,6 +80,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
 
   const handleCreateAirdrop = useCallback(() => {
     if (!communityInfo || !userInfo || !factory) return;
+    setError(null);
 
     deployContract({
       abi: factory.abi,
@@ -87,47 +88,127 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
       args: [airdropData.erc20Address!, csvResult.tree.root as `0x${string}`],
       chainId: airdropData.chainId,
     }, {
-      onError(error, variables, context) {
+      onError(error) {
+        setError("Error deploying airdrop contract: " + error.message);
         console.error("Error deploying airdrop contract", error);
-      },
-      onSuccess(data, variables, context) {
-        console.log("Airdrop contract deployment transaction sent", data, variables, context);
-      },
-      onSettled(data, error, variables, context) {
-        console.log("Airdrop contract deployment settled", data, error, variables, context);
       },
     });
   }, [communityInfo, userInfo, airdropData, csvResult, deployContract, factory]);
 
+  const inProgress = isPending || isSuccess || isConfirming || isConfirmed || fetcher.state !== "idle";
+
   return <div className="h-full flex flex-col items-center justify-start w-full px-2">
-    <div className="flex flex-col grow gap-4 max-w-md w-md mx-auto items-center">
+    <div className="flex flex-col grow gap-4 max-w-md w-md items-center">
       <p>You are about to create an airdrop for {airdropData.name} on {airdropData.chainName}.</p>
-      <p>The ERC20 contract address is {airdropData.erc20Address}.</p>
-      {txHash && (
-        <div className="text-sm text-gray-600">
-          <p>Transaction Hash: {txHash}</p>
-          {isConfirming && <p>Waiting for confirmation...</p>}
-          {isConfirmed && receipt?.contractAddress && (
-            <p>Contract deployed at: {receipt.contractAddress}</p>
-          )}
+      <div className="card card-xs bg-base-300">
+        <div className="card-body">
+          <table className="table table-xs wrap-anywhere">
+            <tbody>
+              <tr>
+                <td colSpan={2}>
+                  <p className="w-full text-center text-sm mb-2 font-bold opacity-60">Airdrop Details</p>
+                </td>
+              </tr>
+              <tr>
+                <td>Name</td>
+                <td>{airdropData.name}</td>
+              </tr>
+              <tr>
+                <td>ERC20 Address</td>
+                <td>{airdropData.erc20Address}</td>
+              </tr>
+              <tr>
+                <td>Chain</td>
+                <td>{airdropData.chainName} (chainId: {airdropData.chainId})</td>
+              </tr>
+              <tr>
+                <td>Merkle Root</td>
+                <td>{csvResult.tree.root}</td>
+              </tr>
+              <tr>
+                <td>Decimals</td>
+                <td>{airdropData.decimals}</td>
+              </tr>
+              <tr>
+                <td>Contract Address</td>
+                <td>{receipt?.contractAddress || "Not deployed yet"}</td>
+              </tr>
+              <tr>
+                <td>Deployment Tx</td>
+                <td>{txHash || "Not deployed yet"}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
+      <div role="alert" className="alert alert-info">
+        <div className="flex flex-col items-center gap-2 min-w-48">
+          <div className="font-bold">Status</div>
+          {fetcher.state === "idle" && !isPending && !isConfirming && !isConfirmed && (
+            <div className="flex flex-row items-center gap-2">
+              <FaCheck />
+              <span>Ready</span>
+            </div>
+          )}
+          {isSuccess ? (
+            <div className="flex flex-row items-center gap-2">
+              <FaCheck />
+              <span>Transaction signed</span>
+            </div>
+          ) : isPending ? (
+            <div className="flex flex-row items-center gap-2">
+              <CgSpinner className="animate-spin" />
+              <span>Waiting for transaction...</span>
+            </div>
+          ) : null}
+          {isConfirmed ? (
+            <div className="flex flex-row items-center gap-2">
+              <FaCheck />
+              <span>Deployment confirmed</span>
+            </div>
+          ) : isConfirming ? (
+            <div className="flex flex-row items-center gap-2">
+              <CgSpinner className="animate-spin" />
+              <span>Waiting for deployment...</span>
+            </div>
+          ) : null}
+          {fetcher.data ? (
+            <div className="flex flex-row items-center gap-2">
+              <FaCheck />
+              <span>Airdrop created successfully</span>
+            </div>
+          ) : fetcher.state !== "idle" ? (
+            <div className="flex flex-row items-center gap-2">
+              <CgSpinner className="animate-spin" />
+              <span>Submitting to database...</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
     <div className="flex flex-col items-center gap-2 mt-auto">
       <TokenInfo tokenName={airdropData.tokenName} tokenSymbol={airdropData.tokenSymbol} decimals={airdropData.decimals} />
       <div className="flex flex-row gap-2">
-        <button
-          className="btn btn-primary"
-          onClick={() => setStep(1)}
-          disabled={isPending || isConfirming}
-        >Back</button>
-        <button
-          className="btn btn-primary"
-          onClick={handleCreateAirdrop}
-          disabled={isPending || isConfirming}
-        >
-          {isPending ? "Deploying..." : isConfirming ? "Confirming..." : "Create Airdrop"}
-        </button>
+        {!fetcher.data && <>
+          <button
+            className="btn btn-primary"
+            onClick={() => setStep(1)}
+            disabled={inProgress}
+          >Back</button>
+          <button
+            className="btn btn-primary"
+            onClick={handleCreateAirdrop}
+            disabled={inProgress}
+          >
+            {inProgress ? "Deploying..." : "Create Airdrop"}
+          </button>
+        </>}
+        {fetcher.data && (
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/${fetcher.data.airdropId}`)}
+          >Done</button>
+        )}
       </div>
     </div>
   </div>;
