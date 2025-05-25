@@ -11,10 +11,11 @@ interface CsvUploadButtonProps {
   text: string;
   icon?: React.ReactNode;
   className?: string;
+  disabled?: boolean;
   onUpload: (result: CsvUploadResult) => void;
 }
 
-export default function CsvUploadButton({ text, icon, className, onUpload }: CsvUploadButtonProps) {
+export default function CsvUploadButton({ text, icon, className, disabled, onUpload }: CsvUploadButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,8 +68,8 @@ export default function CsvUploadButton({ text, icon, className, onUpload }: Csv
 
   return <div className="flex flex-col items-center cursor-pointer">
     <button
-      className="btn btn-primary pointer-events-none relative"
-      disabled={loading}
+      className={`btn btn-primary pointer-events-none relative ${className || ""}`}
+      disabled={loading || disabled}
     >
       {text}
       <input
@@ -76,7 +77,7 @@ export default function CsvUploadButton({ text, icon, className, onUpload }: Csv
         className="opacity-0 pointer-events-auto h-full w-full absolute top-0 left-0"
         accept=".csv"
         onChange={handleFileUpload}
-        disabled={loading}
+        disabled={loading || disabled}
       />
     </button>
   </div>;

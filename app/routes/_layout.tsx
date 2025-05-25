@@ -4,11 +4,11 @@ import Menu from "~/components/menu/menu";
 
 export default function Layout() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="grid grid-rows-[auto_1fr] h-full w-full max-h-[100vh] max-w-[100vw]">
       <Header />
-      <div className="flex flex-row h-full px-4 py-2">
+      <div className="grid grid-cols-[auto_1fr] px-4 py-2 gap-4 max-h-full overflow-hidden">
         <Menu />
-        <div className="flex-1">
+        <div className="overflow-hidden">
           <Outlet />
         </div>
       </div>

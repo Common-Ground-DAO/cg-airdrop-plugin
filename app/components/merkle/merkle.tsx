@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAccount, useDeployContract, useReadContract } from "wagmi";
 import { useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
+import FormatUnits from "../format-units/format-units";
 
 declare global {
   interface Window {
@@ -16,37 +17,6 @@ declare global {
 
 // Check if we're running in the browser
 const isBrowser = typeof window !== 'undefined';
-
-function FormatUnits({value, decimals}: {value: string, decimals: number}) {
-  const thousands_sep = ",";
-  const decimal_sep = ".";
-  if (!/^\d+$/.test(value)) {
-    console.log(value);
-    throw new Error("Invalid number");
-  }
-  if (decimals === 0) {
-    return value;
-  }
-  let frac = value.slice(-1 * decimals);
-  let int = value.slice(0, -1 * decimals);
-  if (frac.length < decimals) {
-    frac = frac.padStart(decimals, "0");
-  }
-  if (int.length < 1) {
-    int = "0";
-  }
-  if (thousands_sep) {
-    int = int.replace(/\B(?=(\d{3})+(?!\d))/g, thousands_sep);
-  }
-
-  return (
-    <div className="flex items-center font-mono justify-end">
-      <div>{int}</div>
-      <div>{decimal_sep}</div>
-      <div className="max-w-10 overflow-x-hidden text-ellipsis">{frac}</div>
-    </div>
-  );
-}
 
 // ClientOnly component to prevent hydration issues
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -76,28 +46,6 @@ export default function MakeTree() {
   const { userInfo, communityInfo } = useCgData();
   const submit = useSubmit();
 
-  const handleCreateAirdrop = useCallback(() => {
-    if (!communityInfo || !userInfo) return;
-    
-    const formData = new FormData();
-    formData.append("name", "Test Airdrop");
-    formData.append("creatorId", userInfo.id);
-    formData.append("communityId", communityInfo.id);
-    formData.append("contract", "0x0000000000000000000000000000000000000000");
-    formData.append("items", JSON.stringify([
-      {
-        address: "0x0000000000000000000000000000000000000000",
-        amount: "100",
-      }, 
-      {
-        address: "0x0000000000000000000000000000000000000001",
-        amount: "200",
-      }
-    ]));
-
-    submit(formData, { method: "post", action: "/api/airdrops", navigate: false });
-  }, [communityInfo, userInfo, submit]);
-
   const { address, isConnected } = useAccount();
   const { 
     deployContract, 
@@ -105,11 +53,6 @@ export default function MakeTree() {
     isSuccess, 
     data: txHash 
   } = useDeployContract();
-
-  const getAirdropClaimFactory = async () => {
-    const { AirdropClaim__factory } = await import("../../contracts/factories/contracts/AirdropClaim__factory");
-    return AirdropClaim__factory;
-  }
 
   useEffect(() => {
     if (isBrowser) {
