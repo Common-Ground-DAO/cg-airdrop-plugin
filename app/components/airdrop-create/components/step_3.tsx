@@ -1,9 +1,9 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
-import { useAirdropContractFactory, useErc20Abi } from "~/hooks/contractFactories";
+import { useAirdropContractFactory } from "~/hooks/contractFactories";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
-import { useAccount, useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
+import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TokenInfo } from ".";
 
@@ -14,6 +14,8 @@ interface StepThreeProps {
 }
 
 const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreeProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { communityInfo, userInfo } = useCgData();
   const submit = useSubmit();
   const factory = useAirdropContractFactory();
@@ -33,8 +35,15 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
     hash: txHash,
   });
 
+  const { data: merkleRoot } = useReadContract({
+    address: receipt?.contractAddress || undefined,
+    abi: factory?.abi,
+    functionName: "merkleRoot",
+    chainId: airdropData.chainId,
+  });
+
   // Submit to database when we have the contract address
-  const handleSubmitToDatabase = useCallback((contractAddress: string) => {
+  const handleSubmitToDatabase = useCallback(async (contractAddress: string) => {
     if (!communityInfo || !userInfo) return;
 
     console.log("Submitting airdrop to database with contract address:", contractAddress);
@@ -51,15 +60,23 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
       csvResult.rows.map(row => ({ address: row[0], amount: row[1] }))
     ));
 
-    submit(formData, { method: "post", action: "/api/airdrop/create", navigate: false });
+    try {
+      setIsSubmitting(true);
+      await submit(formData, { method: "post", action: "/api/airdrop/create", navigate: false });
+    } catch (error) {
+      console.error("Error submitting airdrop to database", error);
+      setError("Error submitting airdrop to database");
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [communityInfo, userInfo, submit, airdropData, csvResult]);
 
   // Effect to handle successful deployment
   React.useEffect(() => {
-    if (isConfirmed && receipt?.contractAddress) {
+    if (isConfirmed && receipt?.contractAddress && merkleRoot === csvResult.tree.root) {
       handleSubmitToDatabase(receipt.contractAddress);
     }
-  }, [isConfirmed, receipt?.contractAddress, handleSubmitToDatabase]);
+  }, [isConfirmed, receipt?.contractAddress, handleSubmitToDatabase, merkleRoot, csvResult.tree.root]);
 
   const handleCreateAirdrop = useCallback(() => {
     if (!communityInfo || !userInfo || !factory) return;
