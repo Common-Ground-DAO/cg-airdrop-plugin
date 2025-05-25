@@ -46,7 +46,7 @@ export default function MakeTree() {
   const { userInfo, communityInfo } = useCgData();
   const submit = useSubmit();
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const { 
     deployContract, 
     isPending, 
@@ -65,6 +65,7 @@ export default function MakeTree() {
     abi: abi || [],
     functionName: "hasClaimed",
     args: [address as `0x${string}`],
+    chainId: chain?.id,
   });
   
   // Track contract address from transaction receipt

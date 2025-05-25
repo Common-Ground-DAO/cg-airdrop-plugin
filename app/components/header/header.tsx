@@ -1,5 +1,5 @@
 import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain, useChains } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 
 export default function Header() {
@@ -32,6 +32,39 @@ function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponse
   </>)
 }
 
+function ChainSwitcher() {
+  const { chain } = useAccount();
+  const { switchChain, isPending } = useSwitchChain();
+  const chains = useChains();
+
+  if (!chain) return null;
+
+  return (
+    <div className="dropdown dropdown-end">
+      <div 
+        tabIndex={isPending ? -1 : 0} 
+        role="button" 
+        className={`btn btn-sm btn-outline ${isPending ? 'btn-disabled' : ''}`}
+      >
+        {isPending ? "Switching..." : chain.name}
+      </div>
+      <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+        {chains.map((availableChain) => (
+          <li key={availableChain.id}>
+            <button
+              onClick={() => switchChain({ chainId: availableChain.id })}
+              className={`${chain.id === availableChain.id ? 'active' : ''}`}
+              disabled={isPending}
+            >
+              {availableChain.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function WalletConnect() {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
@@ -42,6 +75,7 @@ function WalletConnect() {
   if (isConnected) {
     return (
       <div className="flex flex-row items-center gap-2">
+        <ChainSwitcher />
         <p className="font-mono text-xs">Connected: {!address ? "Unknown" : `${address.slice(0, 6)}...${address.slice(-4)}`}</p>
         <button className="btn btn-sm btn-outline" onClick={() => disconnect()}>
           Disconnect

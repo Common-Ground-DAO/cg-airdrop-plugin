@@ -7,12 +7,44 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
+import {
+  mainnet,
+  base,
+  bsc,
+  lukso,
+  arbitrum,
+  arbitrumNova,
+  avalanche,
+  celo,
+  fantom,
+  gnosis,
+  linea,
+  optimism,
+  polygon,
+  polygonZkEvm,
+  scroll,
+} from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./app.css";
 import { CgPluginLibProvider } from "./context/plugin_lib";
 import { CgDataProvider } from "./context/cg_data";
+
+// Define local HardHat network
+const hardhat = {
+  id: 31337,
+  name: 'Hardhat',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: ['http://127.0.0.1:8545'],
+    },
+  },
+} as const;
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -31,10 +63,42 @@ const queryClient = new QueryClient();
 
 // Create wagmi config
 const config = createConfig({
-  chains: [mainnet],
+  chains: [
+    hardhat,
+    mainnet,
+    base,
+    bsc,
+    lukso,
+    arbitrum,
+    arbitrumNova,
+    avalanche,
+    celo,
+    fantom,
+    gnosis,
+    linea,
+    optimism,
+    polygon,
+    polygonZkEvm,
+    scroll,
+  ],
   connectors: [injected()],
   transports: {
+    [hardhat.id]: http('http://127.0.0.1:8545'),
     [mainnet.id]: http(),
+    [base.id]: http(),
+    [bsc.id]: http(),
+    [lukso.id]: http(),
+    [arbitrum.id]: http(),
+    [arbitrumNova.id]: http(),
+    [avalanche.id]: http(),
+    [celo.id]: http(),
+    [fantom.id]: http(),
+    [gnosis.id]: http(),
+    [linea.id]: http(),
+    [optimism.id]: http(),
+    [polygon.id]: http(),
+    [polygonZkEvm.id]: http(),
+    [scroll.id]: http(),
   },
 });
 
