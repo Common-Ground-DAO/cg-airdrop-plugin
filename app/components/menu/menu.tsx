@@ -1,17 +1,20 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { IoAddCircleOutline, IoInformationCircleOutline } from "react-icons/io5";
 import { FaParachuteBox } from "react-icons/fa6";
 import { useCgData } from "~/context/cg_data";
 
+const airdropsPathRegex = /^\/\d*$/;
+
 export default function Menu() {
     const { isAdmin } = useCgData();
+    const location = useLocation();
 
     return (
         <ul className="menu bg-base-100 w-56 p-2 rounded-box self-start gap-1">
             <li>
                 <NavLink
                     to="/"
-                    className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
+                    className={`flex flex-row items-center gap-2 ${airdropsPathRegex.test(location.pathname) ? 'bg-primary text-primary-content' : ''}`}
                 >
                     <FaParachuteBox />
                     Airdrops

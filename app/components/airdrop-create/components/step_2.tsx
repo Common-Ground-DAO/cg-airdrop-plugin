@@ -36,7 +36,9 @@ const AirdropSetupStepTwo = ({ csvResult, handleCsvUpload, setStep, airdropData 
           <tbody>
             {csvResult.rows.map((row, index) => (
               <tr key={index}>
-                <td className={`p-2 ${index === csvResult.rows.length - 1 ? "" : "border-b"}`}>{row[0]}</td>
+                <td className={`p-2 ${index === csvResult.rows.length - 1 ? "" : "border-b"}`}>
+                  {row[0]}
+                </td>
                 <td className={`p-2 ${index === csvResult.rows.length - 1 ? "" : "border-b"}`}>
                   <FormatUnits value={row[1]} decimals={airdropData.decimals || 0} />
                 </td>

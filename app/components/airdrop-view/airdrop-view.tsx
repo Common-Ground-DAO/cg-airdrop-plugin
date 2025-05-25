@@ -3,6 +3,9 @@ import { NavLink, useFetcher } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import type { Airdrop, AirdropItem } from "generated/prisma";
 import { IoArrowBack, IoChevronForward } from "react-icons/io5";
+import FormatUnits from "../format-units/format-units";
+import { useErc20Abi } from "~/hooks/contractFactories";
+import { useReadContract } from "wagmi";
 
 export default function AirdropView({ airdropId }: { airdropId?: number }) {
   const { communityInfo } = useCgData();
@@ -33,7 +36,7 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
   }, [airdropFetcher.data, airdropId]);
 
   return (
-    <div className="px-8 pb-4">
+    <div className="flex flex-col max-h-[calc(100%-1rem)]">
       {!airdrop && <AirdropList airdrops={airdropFetcher.data} />}
       {!!airdrop && <AirdropDetailView airdrop={airdrop} />}
     </div>
@@ -46,22 +49,25 @@ function AirdropList({
   airdrops?: Airdrop[],
 }) {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold mb-6">Airdrops</h1>
-      {!!airdrops && airdrops.length > 0 && airdrops.map((airdrop) => (
-        <NavLink
-          key={airdrop.id}
-          to={`/${airdrop.id}`}
-          className="card bg-base-100 w-full p-4 cursor-pointer flex flex-row gap-4 items-center"
-        >
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold">{airdrop.name}</h2>
-          </div>
-          <IoChevronForward className="ml-auto" />
-        </NavLink>
-      ))}
-      {!!airdrops && airdrops.length === 0 && <div>No airdrops found for this community :(</div>}
-      {!airdrops && <div>Loading...</div>}
+    <div className="card px-8 py-4 bg-base-100 overflow-auto">
+      <div className="flex flex-col gap-4 items-center">
+        <h1 className="text-3xl font-bold mb-2">Airdrops</h1>
+        {!!airdrops && airdrops.length > 0 && airdrops.map((airdrop) => (
+          <NavLink
+            key={airdrop.id}
+            to={`/${airdrop.id}`}
+            className="card card-sm bg-base-300 px-3 py-2 w-full cursor-pointer flex flex-row gap-4 items-center"
+          >
+            <div className="flex flex-row gap-2 items-center">
+              <h2 className="text-lg font-bold">{airdrop.name}</h2>
+              <p className="text-xs text-gray-500">on {airdrop.chainName}</p>
+            </div>
+            <IoChevronForward className="ml-auto" />
+          </NavLink>
+        ))}
+        {!!airdrops && airdrops.length === 0 && <div>No airdrops found for this community :(</div>}
+        {!airdrops && <div>Loading...</div>}
+      </div>
     </div>
   );
 }
@@ -72,10 +78,20 @@ function AirdropDetailView({
   airdrop: Airdrop,
 }) {
   const airdropItemsFetcher = useFetcher<AirdropItem[]>();
+  const erc20Abi = useErc20Abi();
+
+  const { data: decimals } = useReadContract({
+    address: airdrop.erc20Address as `0x${string}`,
+    abi: erc20Abi || [],
+    functionName: "decimals",
+    chainId: airdrop.chainId,
+  });
 
   useEffect(() => {
     airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/items` });
   }, [airdrop]);
+
+  const airdropItems = airdropItemsFetcher.data;
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,22 +105,26 @@ function AirdropDetailView({
         <div className="flex flex-row gap-4">
           <h2>Airdrop Items</h2>
         </div>
-        {!!airdropItemsFetcher.data && <table>
+        {airdropItems && airdropItems.length > 0 && decimals !== undefined && <table>
           <tbody>
             <tr>
-              <th>Address</th>
-              <th>Amount</th>
+              <th className="p-2 border-b">Address</th>
+              <th className="p-2 border-b">Amount</th>
             </tr>
-            {airdropItemsFetcher.data.map((item) => (
+            {airdropItems.map((item, index) => (
               <tr key={item.address}>
-                <td>{item.address}</td>
-                <td>{item.amount}</td>
+                <td className={`p-2 ${index === airdropItems.length - 1 ? "" : "border-b"}`}>
+                  {item.address}
+                </td>
+                <td className={`p-2 ${index === airdropItems.length - 1 ? "" : "border-b"}`}>
+                  <FormatUnits value={item.amount} decimals={decimals || 0} />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>}
-        {!airdropItemsFetcher.data && <div>Loading...</div>}
-        {airdropItemsFetcher.data && airdropItemsFetcher.data.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
+        {(!airdropItems || decimals === undefined) && <div>Loading...</div>}
+        {airdropItems && airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
       </div>
     </div>
   );

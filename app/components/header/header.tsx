@@ -1,4 +1,5 @@
 import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
+import { IoChevronDown } from "react-icons/io5";
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useChains } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 
@@ -46,7 +47,7 @@ function ChainSwitcher() {
         role="button" 
         className={`btn btn-sm btn-outline ${isPending ? 'btn-disabled' : ''}`}
       >
-        {isPending ? "Switching..." : chain.name}
+        {isPending ? "Switching..." : chain.name} <IoChevronDown />
       </div>
       <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
         {chains.map((availableChain) => (

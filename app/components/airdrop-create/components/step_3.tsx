@@ -207,7 +207,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
           <button
             className="btn btn-primary"
             onClick={() => navigate(`/${fetcher.data.airdropId}`)}
-          >Done</button>
+          >Finish</button>
         )}
       </div>
     </div>
