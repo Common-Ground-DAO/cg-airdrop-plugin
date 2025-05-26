@@ -18,7 +18,7 @@ interface StepThreeProps {
 
 const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreeProps) => {
   const [error, setError] = useState<string | null>(null);
-  const { communityInfo, userInfo } = useCgData();
+  const { communityInfo, userInfo, __communityInfoRawResponse, __userInfoRawResponse } = useCgData();
   const submit = useSubmit();
   const fetcher = useFetcher();
   const navigate = useNavigate();
@@ -62,6 +62,8 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
     formData.append("airdropAddress", contractAddress);
     formData.append("chainId", airdropData.chainId!.toString());
     formData.append("chainName", airdropData.chainName!);
+    formData.append("communityInfoRaw", __communityInfoRawResponse!);
+    formData.append("userInfoRaw", __userInfoRawResponse!);
     formData.append("items", JSON.stringify(
       csvResult.rows.map(row => ({ address: row[0], amount: row[1] }))
     ));

@@ -17,8 +17,8 @@
     "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "@common-ground-dao/cg-plugin-lib": "^0.9.12",
-    "@common-ground-dao/cg-plugin-lib-host": "^0.9.12",
+    "@common-ground-dao/cg-plugin-lib": "^0.9.13",
+    "@common-ground-dao/cg-plugin-lib-host": "^0.9.13",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/client": "^6.8.2",
