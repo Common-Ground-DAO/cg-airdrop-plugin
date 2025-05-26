@@ -23,7 +23,7 @@ function CommunityInfo({ communityInfo }: { communityInfo: CommunityInfoResponse
 
   return (<>
     <div className="avatar">
-      <div className="w-10 rounded-xl">
+      <div className="rounded-xl w-10 h-10">
         <img src={communityInfo.smallLogoUrl || communityInfo.largeLogoUrl} />
       </div>
     </div>

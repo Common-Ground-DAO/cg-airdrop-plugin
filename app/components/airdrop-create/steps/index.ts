@@ -1,6 +1,6 @@
-import AirdropSetupStepOne from "./step_1";
-import AirdropSetupStepTwo from "./step_2";
-import AirdropSetupStepThree from "./step_3";
-import TokenInfo from "./token_info";
+import AirdropSetupStepOne from "./step-1";
+import AirdropSetupStepTwo from "./step-2";
+import AirdropSetupStepThree from "./step-3";
+import TokenInfo from "./token-info";
 
 export { AirdropSetupStepOne, AirdropSetupStepTwo, AirdropSetupStepThree, TokenInfo };
