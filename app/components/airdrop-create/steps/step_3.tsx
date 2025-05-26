@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropContractFactory } from "~/hooks/contractFactories";
@@ -6,8 +6,9 @@ import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button"
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TokenInfo } from ".";
-import { CgSpinner } from "react-icons/cg";
-import { FaCheck } from "react-icons/fa6";
+import { FaRegCircle, FaRegCircleCheck } from "react-icons/fa6";
+import { PiSpinnerBold } from "react-icons/pi";
+import { MdErrorOutline } from "react-icons/md";
 
 interface StepThreeProps {
   airdropData: AirdropData;
@@ -22,6 +23,8 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const factory = useAirdropContractFactory();
+  const submitTriggered = useRef(false);
+
   const {
     deployContract,
     isPending,
@@ -74,7 +77,10 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
   // Effect to handle successful deployment
   React.useEffect(() => {
     if (isConfirmed && receipt?.contractAddress && merkleRoot === csvResult.tree.root) {
-      handleSubmitToDatabase(receipt.contractAddress);
+      if (!submitTriggered.current) {
+        submitTriggered.current = true;
+        handleSubmitToDatabase(receipt.contractAddress);
+      }
     }
   }, [isConfirmed, receipt?.contractAddress, handleSubmitToDatabase, merkleRoot, csvResult.tree.root]);
 
@@ -142,67 +148,47 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
         </div>
       </div>
       <div role="alert" className="alert alert-info">
-        <div className="flex flex-col items-center gap-2 min-w-48">
-          <div className="font-bold">Status</div>
-          {fetcher.state === "idle" && !isPending && !isConfirming && !isConfirmed && (
-            <div className="flex flex-row items-center gap-2">
-              <FaCheck />
-              <span>Ready</span>
-            </div>
-          )}
-          {isSuccess ? (
-            <div className="flex flex-row items-center gap-2">
-              <FaCheck />
-              <span>Transaction signed</span>
-            </div>
-          ) : isPending ? (
-            <div className="flex flex-row items-center gap-2">
-              <CgSpinner className="animate-spin" />
-              <span>Waiting for transaction...</span>
-            </div>
-          ) : null}
-          {isConfirmed ? (
-            <div className="flex flex-row items-center gap-2">
-              <FaCheck />
-              <span>Deployment confirmed</span>
-            </div>
-          ) : isConfirming ? (
-            <div className="flex flex-row items-center gap-2">
-              <CgSpinner className="animate-spin" />
-              <span>Waiting for deployment...</span>
-            </div>
-          ) : null}
-          {fetcher.data ? (
-            <div className="flex flex-row items-center gap-2">
-              <FaCheck />
-              <span>Airdrop created successfully</span>
-            </div>
-          ) : fetcher.state !== "idle" ? (
-            <div className="flex flex-row items-center gap-2">
-              <CgSpinner className="animate-spin" />
-              <span>Submitting to database...</span>
-            </div>
-          ) : null}
+        <div className="flex flex-col items-start gap-2 col-span-2">
+          <div className="font-bold w-full text-center">Status</div>
+          <div className="flex flex-row items-center gap-2">
+            {isSuccess ? <FaRegCircleCheck /> : isPending ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
+            <span>Sign Transaction</span>
+          </div>
+          <div className="flex flex-row items-center gap-2">
+            {isConfirmed ? <FaRegCircleCheck /> : isConfirming ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
+            <span>Wait for deployment</span>
+          </div>
+          <div className="flex flex-row items-center gap-2">
+            {fetcher.data ? <FaRegCircleCheck /> : fetcher.state !== "idle" ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
+            <span>Save in database</span>
+          </div>
         </div>
       </div>
+      {error && <div className="alert alert-error"><MdErrorOutline />{error}</div>}
     </div>
     <div className="flex flex-col items-center gap-2 mt-auto">
       <TokenInfo tokenName={airdropData.tokenName} tokenSymbol={airdropData.tokenSymbol} decimals={airdropData.decimals} />
       <div className="flex flex-row gap-2">
-        {!fetcher.data && <>
+        {!inProgress && <>
           <button
             className="btn btn-primary"
             onClick={() => setStep(1)}
-            disabled={inProgress}
           >Back</button>
           <button
             className="btn btn-primary"
             onClick={handleCreateAirdrop}
-            disabled={inProgress}
           >
-            {inProgress ? "Deploying..." : "Create Airdrop"}
+            Deploy Airdrop
           </button>
         </>}
+        {inProgress && !fetcher.data && (
+          <button
+            className="btn btn-primary"
+            disabled
+          >
+            Deploying...
+          </button>
+        )}
         {fetcher.data && (
           <button
             className="btn btn-primary"

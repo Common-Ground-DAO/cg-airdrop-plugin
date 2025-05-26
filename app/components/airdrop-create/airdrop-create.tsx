@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CsvUploadResult } from "../csv-upload-button/csv-upload-button";
 import { useAccount } from "wagmi";
-import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from "./components";
+import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from "./steps";
 
 export interface AirdropData {
   name?: string;
@@ -18,10 +18,6 @@ export default function AirdropView() {
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
   const { chain } = useAccount();
   const [airdropData, setAirdropData] = useState<AirdropData>({ chainId: chain?.id, chainName: chain?.name });
-
-  const handleCsvUpload = useCallback((result: CsvUploadResult) => {
-    setCsvResult(result);
-  }, []);
 
   useEffect(() => {
     if (chain?.id !== airdropData.chainId || chain?.name !== airdropData.chainName) {
@@ -50,7 +46,7 @@ export default function AirdropView() {
       </ul>
       <div className="flex-1 flex flex-col overflow-hidden">
         {step === 0 && <AirdropSetupStepOne airdropData={airdropData} setAirdropData={setAirdropData} setStep={setStep} />}
-        {step === 1 && <AirdropSetupStepTwo csvResult={csvResult!} setStep={setStep} handleCsvUpload={handleCsvUpload} airdropData={airdropData} />}
+        {step === 1 && <AirdropSetupStepTwo airdropData={airdropData} csvResult={csvResult} setCsvResult={setCsvResult} setStep={setStep} />}
         {step === 2 && <AirdropSetupStepThree airdropData={airdropData} csvResult={csvResult!} setStep={setStep} />}
       </div>
     </div>

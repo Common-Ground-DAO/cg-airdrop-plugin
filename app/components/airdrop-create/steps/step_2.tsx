@@ -5,12 +5,12 @@ import { TokenInfo } from ".";
 
 interface StepTwoProps {
   csvResult: CsvUploadResult | null;
-  handleCsvUpload: (result: CsvUploadResult) => void;
+  setCsvResult: React.Dispatch<React.SetStateAction<CsvUploadResult | null>>;
   setStep: React.Dispatch<React.SetStateAction<number>>;
   airdropData: AirdropData;
 }
 
-const AirdropSetupStepTwo = ({ csvResult, handleCsvUpload, setStep, airdropData }: StepTwoProps) => {
+const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: StepTwoProps) => {
   return <div className="h-full flex flex-col items-center">
     <div className="flex flex-col mb-4 items-center max-w-md">
       {!csvResult && <>
@@ -58,7 +58,7 @@ const AirdropSetupStepTwo = ({ csvResult, handleCsvUpload, setStep, airdropData 
         >Back</button>
         <CsvUploadButton
           text={`Upload${!!csvResult ? " new" : ""} CSV`}
-          onUpload={handleCsvUpload}
+          onUpload={setCsvResult}
         />
         <button
           className="btn btn-primary"
