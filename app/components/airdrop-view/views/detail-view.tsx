@@ -1,10 +1,11 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useErc20Data } from "~/hooks";
+import { useAccount } from "wagmi";
 
 export default function AirdropDetailView({
   airdrop,
@@ -15,6 +16,7 @@ export default function AirdropDetailView({
   const submit = useSubmit();
   const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
   const { decimals, error: contractLoadError } = useErc20Data(airdrop.erc20Address as `0x${string}`, airdrop.chainId);
+  const { address } = useAccount();
 
   useEffect(() => {
     if (airdrop?.id === undefined) return;
@@ -31,7 +33,25 @@ export default function AirdropDetailView({
     submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
   }, [airdrop, submit, __userInfoRawResponse, __communityInfoRawResponse]);
 
-  const airdropItems = airdropItemsFetcher.data;
+  const { ownAirdropItems, otherAirdropItems } = useMemo(() => {
+    const lowerCaseAddress = address?.toLowerCase();
+    if (!lowerCaseAddress) return { ownAirdropItems: [], otherAirdropItems: airdropItemsFetcher.data || [] };
+    let ownAirdropItems: AirdropItem[] = [];
+    const otherAirdropItems: AirdropItem[] = [];
+    for (const item of airdropItemsFetcher.data || []) {
+      if (item.address.toLowerCase() === lowerCaseAddress) {
+        if (ownAirdropItems.length > 0) {
+          console.warn("Multiple airdrop items found for the same address: ", item.address);
+        }
+        ownAirdropItems.push(item);
+      } else {
+        otherAirdropItems.push(item);
+      }
+    }
+    return { ownAirdropItems, otherAirdropItems };
+  }, [airdropItemsFetcher.data, address]);
+
+  const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
 
   return (
     <div className="card bg-base-100 overflow-hidden p-4">
@@ -43,26 +63,43 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col flex-1 gap-4 overflow-auto">
-          {airdropItems && airdropItems.length > 0 && decimals !== undefined && <table>
+          {hasItems && decimals !== undefined && <table>
             <tbody>
               <tr>
                 <th className="p-2 border-b">Address</th>
                 <th className="p-2 border-b">Amount</th>
+                <th className="p-2 border-b">{ownAirdropItems.length > 0 ? "Claim" : ""}</th>
               </tr>
-              {airdropItems.map((item, index) => (
+              {ownAirdropItems.map((item, index) => (
                 <tr key={item.address}>
-                  <td className={`p-2 ${index === airdropItems.length - 1 ? "" : "border-b"}`}>
+                  <td className={`p-2 font-mono ${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b border-inherit"}`}>
+                    <span className="text-success">{item.address}</span>
+                  </td>
+                  <td className={`p-2 ${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
+                    <FormatUnits className="text-right text-success" value={item.amount} decimals={decimals || 0} />
+                  </td>
+                  <td className={`${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
+                    <div className="flex flex-col items-center">
+                      <button className="btn btn-xs btn-primary">Claim</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {otherAirdropItems.map((item, index) => (
+                <tr key={item.address}>
+                  <td className={`p-2 font-mono ${index === otherAirdropItems.length - 1 ? "" : "border-b"}`}>
                     {item.address}
                   </td>
-                  <td className={`p-2 ${index === airdropItems.length - 1 ? "" : "border-b"}`}>
-                    <FormatUnits value={item.amount} decimals={decimals || 0} />
+                  <td className={`p-2 ${index === otherAirdropItems.length - 1 ? "" : "border-b"}`}>
+                    <FormatUnits className="text-right" value={item.amount} decimals={decimals || 0} />
                   </td>
+                  <td className={`p-2 ${index === otherAirdropItems.length - 1 ? "" : "border-b"}`}></td>
                 </tr>
               ))}
             </tbody>
           </table>}
-          {!airdropItems ? <div>Loading items...</div> : decimals === undefined ? <div>Loading contract data...</div> : null}
-          {airdropItems && airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
+          {!airdropItemsFetcher.data ? <div>Loading items...</div> : decimals === undefined ? <div>Loading contract data...</div> : null}
+          {airdropItemsFetcher.data?.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
           {contractLoadError && <div>Error: {contractLoadError.message}</div>}
         </div>
       </div>

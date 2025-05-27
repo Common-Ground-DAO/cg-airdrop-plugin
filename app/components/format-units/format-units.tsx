@@ -1,6 +1,6 @@
 const thousands_sep_regex = /\B(?=(\d{3})+(?!\d))/g;
 
-export default function FormatUnits({value, decimals}: {value: string, decimals: number}) {
+export default function FormatUnits({value, decimals, className}: {value: string, decimals: number, className?: string}) {
     const thousands_sep = ",";
     const decimal_sep = ".";
     if (!/^\d+$/.test(value)) {
@@ -30,10 +30,12 @@ export default function FormatUnits({value, decimals}: {value: string, decimals:
     }
   
     return (
-      <div className="flex items-center font-mono justify-end">
-        <div>{int}</div>
-        <div>{decimal_sep}</div>
-        <div className="max-w-14 overflow-x-hidden text-ellipsis">{frac}</div>
+      <div className={className}>
+        <div className="flex items-center font-mono justify-end">
+          <div>{int}</div>
+          <div>{decimal_sep}</div>
+          <div className="max-w-14 overflow-x-hidden text-ellipsis">{frac}</div>
+        </div>
       </div>
     );
   }
