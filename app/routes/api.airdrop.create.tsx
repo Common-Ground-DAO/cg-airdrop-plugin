@@ -1,4 +1,4 @@
-import type { UserInfoResponsePayload, CommunityInfoResponsePayload } from '@common-ground-dao/cg-plugin-lib-host';
+import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/cgDataUtils';
 import { prisma } from '~/lib/db';
 
 // API-only route - handles POST requests to create airdrops
@@ -17,11 +17,34 @@ export async function action({ request }: { request: Request }) {
 
   // Todo: validate all fields?
 
-  const communityInfo = JSON.parse(communityInfoRaw) as CommunityInfoResponsePayload;
-  const userInfo = JSON.parse(userInfoRaw) as UserInfoResponsePayload;
+  const communityInfo = await validateCommunityData(communityInfoRaw);
+  const userInfo = await validateUserData(userInfoRaw);
+  const communityInfoTimestampAge = Date.now() - communityInfo.signatureTimestamp;
+  const userInfoTimestampAge = Date.now() - userInfo.signatureTimestamp;
 
-  console.log(communityInfo);
-  console.log(userInfo);
+  if (communityInfoTimestampAge > 120_000 || userInfoTimestampAge > 120_000) {
+    throw new Error("The provided signed community or user data is too old, please try again.");
+  }
+  if (communityInfo.result.data.id !== communityId) {
+    throw new Error("Community ID mismatch");
+  }
+  if (userInfo.result.data.id !== creatorId) {
+    throw new Error("User ID mismatch");
+  }
+  const isAdmin = await isUserAdmin(communityInfo.result.data, userInfo.result.data);
+  if (!isAdmin) {
+    throw new Error("User is not an admin");
+  }
+
+  const existingCount = await prisma.airdrop.count({
+    where: {
+      communityId,
+    }
+  });
+  
+  if (existingCount >= 10) {
+    throw new Error("You have reached the maximum number of airdrops for this community.");
+  }
 
   const { id: airdropId } = await prisma.airdrop.create({
     data: {

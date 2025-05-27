@@ -32,7 +32,7 @@ model Airdrop {
 model AirdropItem {
   address          String
   amount           String
-  airdrop          Airdrop @relation(fields: [airdropId], references: [id])
+  airdrop          Airdrop @relation(fields: [airdropId], references: [id], onDelete: Cascade)
   airdropId        Int
 
   @@id([address, airdropId])

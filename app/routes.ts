@@ -10,4 +10,5 @@ export default [
     route("api/airdrop/create", "routes/api.airdrop.create.tsx"),
     route("api/airdrop/list", "routes/api.airdrop.list.tsx"),
     route("api/airdrop/items", "routes/api.airdrop.items.tsx"),
+    route("api/airdrop/delete", "routes/api.airdrop.delete.tsx"),
 ] satisfies RouteConfig;
