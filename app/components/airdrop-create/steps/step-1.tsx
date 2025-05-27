@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useErc20Abi } from "~/hooks/contractFactories";
-import { useAccount, useDeployContract, useReadContract } from "wagmi";
+import { useAccount } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TokenInfo } from ".";
 import { TbPlugConnected, TbInfoCircle } from "react-icons/tb";
+import { useErc20Data } from "~/hooks";
 
 interface StepOneProps {
   airdropData: AirdropData;
@@ -14,8 +14,7 @@ interface StepOneProps {
 const addressRegex = /^(0x)?[0-9a-fA-F]{40}$/;
 
 const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOneProps) => {
-  const { address, isConnected, chain, connector } = useAccount();
-  const erc20abi = useErc20Abi();
+  const { isConnected, chain } = useAccount();
   const [addressWarning, setAddressWarning] = useState<string | null>(null);
   const [validAddress, setValidAddress] = useState<`0x${string}` | undefined>(undefined);
 
@@ -31,29 +30,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
     setAirdropData(old => ({ ...old, erc20Address: value as `0x${string}` }));
   }, [airdropData, setAirdropData]);
 
-  const { data: decimals, isFetching: isFetchingDecimals, error: errorDecimals } = useReadContract({
-    address: validAddress,
-    abi: erc20abi || [],
-    functionName: "decimals",
-    chainId: chain?.id,
-  });
-
-  const { data: tokenName, isFetching: isFetchingTokenName, error: errorTokenName } = useReadContract({
-    address: validAddress,
-    abi: erc20abi || [],
-    functionName: "name",
-    chainId: chain?.id,
-  });
-
-  const { data: tokenSymbol, isFetching: isFetchingTokenSymbol, error: errorTokenSymbol } = useReadContract({
-    address: validAddress,
-    abi: erc20abi || [],
-    functionName: "symbol",
-    chainId: chain?.id,
-  });
-
-  const isFetching = isFetchingDecimals || isFetchingTokenName || isFetchingTokenSymbol;
-  const error = errorDecimals || errorTokenName || errorTokenSymbol;
+  const { decimals, name: tokenName, symbol: tokenSymbol, isFetching, error } = useErc20Data(validAddress, chain?.id);
 
   useEffect(() => {
     if (typeof decimals === "number") {

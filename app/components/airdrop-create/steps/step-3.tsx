@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
-import { useAirdropContractFactory } from "~/hooks/contractFactories";
+import { useAirdropContractFactory } from "~/hooks";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";

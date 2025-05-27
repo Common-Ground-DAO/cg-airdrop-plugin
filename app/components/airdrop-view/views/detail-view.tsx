@@ -1,11 +1,10 @@
 import { useCallback, useEffect } from "react";
-import { NavLink, useFetcher, useSubmit } from "react-router";
+import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
-import { useErc20Abi } from "~/hooks/contractFactories";
-import { useReadContract } from "wagmi";
 import { useCgData } from "~/context/cg_data";
+import { useErc20Data } from "~/hooks";
 
 export default function AirdropDetailView({
   airdrop,
@@ -13,26 +12,22 @@ export default function AirdropDetailView({
   airdrop: Airdrop,
 }) {
   const airdropItemsFetcher = useFetcher<AirdropItem[]>();
-  const erc20Abi = useErc20Abi();
   const submit = useSubmit();
   const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
-
-  const { data: decimals } = useReadContract({
-    address: airdrop.erc20Address as `0x${string}`,
-    abi: erc20Abi || [],
-    functionName: "decimals",
-    chainId: airdrop.chainId,
-  });
+  const { decimals, error: contractLoadError } = useErc20Data(airdrop.erc20Address as `0x${string}`, airdrop.chainId);
 
   useEffect(() => {
+    if (airdrop?.id === undefined) return;
     airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/items` });
-  }, [airdrop]);
+  }, [airdrop?.id]);
 
   const deleteAirdrop = useCallback(() => {
     const formData = new FormData();
     formData.append("airdropId", airdrop.id.toString());
     formData.append("communityInfoRaw", __communityInfoRawResponse || "");
     formData.append("userInfoRaw", __userInfoRawResponse || "");
+    // Todo: add confirmation modal
+    // Todo: refresh airdrop list
     submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
   }, [airdrop, submit, __userInfoRawResponse, __communityInfoRawResponse]);
 
@@ -66,13 +61,27 @@ export default function AirdropDetailView({
               ))}
             </tbody>
           </table>}
-          {(!airdropItems || decimals === undefined) && <div>Loading...</div>}
+          {!airdropItems ? <div>Loading items...</div> : decimals === undefined ? <div>Loading contract data...</div> : null}
           {airdropItems && airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
+          {contractLoadError && <div>Error: {contractLoadError.message}</div>}
         </div>
       </div>
-      <div className="flex flex-row gap-4">
-        {isAdmin && <button className="btn btn-error" onClick={deleteAirdrop}>Delete Airdrop</button>}
-      </div>
+      {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-4">
+        <span className="text-xs">Admin Actions</span>
+        <button className="btn btn-error btn-sm" onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}>Delete Airdrop</button>
+      </div>}
+      {isAdmin && <dialog id="delete-airdrop-modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Are you sure you want to delete this airdrop?</h3>
+          <p className="py-4">This action cannot be undone.</p>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-outline">Cancel</button>
+            </form>
+            <button className="btn btn-error" onClick={deleteAirdrop}>Delete</button>
+          </div>
+        </div>
+      </dialog>}
     </div>
   );
 }

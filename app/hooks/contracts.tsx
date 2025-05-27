@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useReadContract } from "wagmi";
+import type { erc20Abi } from "viem";
 import type { AirdropClaim__factory, ERC20__factory } from "~/contracts";
 
 let _airdropFactory: typeof AirdropClaim__factory | null = null;
@@ -63,15 +65,48 @@ export function useErc20ContractFactory() {
     return factory;
 }
 
-export function useErc20Abi() {
-    const erc20ContractFactory = useErc20ContractFactory();
-    const [abi, setAbi] = useState<typeof ERC20__factory["abi"] | null>(erc20ContractFactory?.abi || null);
+let _erc20Abi: typeof erc20Abi | null = null;
+export function useErc20Data(address?: `0x${string}`, chainId?: number) {
+    const [abi, setAbi] = useState<typeof erc20Abi | null>(_erc20Abi);
 
     useEffect(() => {
-        if (!abi && erc20ContractFactory) {
-            setAbi(erc20ContractFactory.abi);
-        }
-    }, [abi, erc20ContractFactory]);
+        if (abi) return;
+        let mounted = true;
+        (async () => {
+            const { erc20Abi } = await import("viem");
+            _erc20Abi = erc20Abi;
+            if (mounted) {
+                setAbi(erc20Abi);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+    
+    const { data: decimals, isFetching: isFetchingDecimals, error: errorDecimals } = useReadContract({
+        address,
+        abi: abi || [],
+        functionName: "decimals",
+        chainId,
+    });
 
-    return abi;
+    const { data: name, isFetching: isFetchingName, error: errorName } = useReadContract({
+        address,
+        abi: abi || [],
+        functionName: "name",
+        chainId,
+    });
+    
+    const { data: symbol, isFetching: isFetchingSymbol, error: errorSymbol } = useReadContract({
+        address,
+        abi: abi || [],
+        functionName: "symbol",
+        chainId,
+    });
+
+    const isFetching = isFetchingDecimals || isFetchingName || isFetchingSymbol;
+    const error = errorDecimals || errorName || errorSymbol;
+
+    return { decimals, name, symbol, isFetching, error };
 }
