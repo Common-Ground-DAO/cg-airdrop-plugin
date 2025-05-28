@@ -4,7 +4,6 @@ import { useState } from "react";
 export interface CsvUploadResult {
   rows: [string, string][];
   tree: StandardMerkleTree<[string, string]>;
-  addressToProofIndexMap: Map<string, number>;
 }
 
 interface CsvUploadButtonProps {
@@ -45,16 +44,8 @@ export default function CsvUploadButton({ text, icon, className, disabled, onUpl
           const treeRows = (data as { address: string, amount: string }[]).map((record) => [record.address, record.amount] as [string, string]);
           const rows = treeRows.sort((a, b) => (BigInt(b[1]) - BigInt(a[1])) > 0n ? 1 : -1);
           const tree = StandardMerkleTree.of(rows, ["address", "uint256"]);
-          
-          console.log(tree.dump());
 
-          // Create a map of proof index to proof
-          const addressToProofIndexMap = new Map<string, number>();
-          for (const [i, v] of tree.entries()) {
-            addressToProofIndexMap.set(v[0], i);
-          }
-
-          onUpload({ rows, tree, addressToProofIndexMap });
+          onUpload({ rows, tree });
         } catch (e) {
           setError(`Error generating merkle tree: ${e instanceof Error ? e.message : String(e)}`);
         } finally {

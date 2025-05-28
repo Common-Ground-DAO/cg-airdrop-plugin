@@ -67,6 +67,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
     formData.append("items", JSON.stringify(
       csvResult.rows.map(row => ({ address: row[0], amount: row[1] }))
     ));
+    formData.append("tree", JSON.stringify(csvResult.tree.dump()));
 
     try {
       await fetcher.submit(formData, { method: "post", action: "/api/airdrop/create" });

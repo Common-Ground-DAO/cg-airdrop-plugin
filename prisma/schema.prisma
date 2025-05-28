@@ -23,8 +23,9 @@ model Airdrop {
   erc20Address     String
   chainName        String
   chainId          Int
-  createdAt        DateTime @default(now())
+  createdAt        DateTime       @default(now())
   items            AirdropItem[]
+  merkleTree       MerkleTree? 
 
   @@index(fields: [communityId])
 }
@@ -32,10 +33,18 @@ model Airdrop {
 model AirdropItem {
   address          String
   amount           String
-  airdrop          Airdrop @relation(fields: [airdropId], references: [id], onDelete: Cascade)
+  airdrop          Airdrop        @relation(fields: [airdropId], references: [id], onDelete: Cascade)
   airdropId        Int
 
   @@id([address, airdropId])
   @@index(fields: [airdropId])
   @@index(fields: [address])
+}
+
+model MerkleTree {
+  airdrop          Airdrop        @relation(fields: [airdropId], references: [id], onDelete: Cascade)
+  airdropId        Int            @id
+  data             Json
+
+  @@index(fields: [airdropId])
 }

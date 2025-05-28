@@ -1,44 +1,55 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
-import type { Airdrop, AirdropItem } from "generated/prisma";
+import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useErc20Data } from "~/hooks";
 import { useAccount } from "wagmi";
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 
 export default function AirdropDetailView({
   airdrop,
 }: {
   airdrop: Airdrop,
 }) {
-  const airdropItemsFetcher = useFetcher<AirdropItem[]>();
+  const airdropItemsFetcher = useFetcher<{
+    airdropItems: AirdropItem[];
+    merkleTree: MerkleTree;
+  }>();
   const submit = useSubmit();
   const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
   const { decimals, error: contractLoadError } = useErc20Data(airdrop.erc20Address as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (airdrop?.id === undefined) return;
     airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/items` });
   }, [airdrop?.id]);
 
-  const deleteAirdrop = useCallback(() => {
-    const formData = new FormData();
-    formData.append("airdropId", airdrop.id.toString());
-    formData.append("communityInfoRaw", __communityInfoRawResponse || "");
-    formData.append("userInfoRaw", __userInfoRawResponse || "");
-    // Todo: add confirmation modal
-    // Todo: refresh airdrop list
-    submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
+  const deleteAirdrop = useCallback(async () => {
+    try {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("airdropId", airdrop.id.toString());
+      formData.append("communityInfoRaw", __communityInfoRawResponse || "");
+      formData.append("userInfoRaw", __userInfoRawResponse || "");
+      await submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
+    }
+    finally {
+      setIsSubmitting(false);
+    }
   }, [airdrop, submit, __userInfoRawResponse, __communityInfoRawResponse]);
 
   const { ownAirdropItems, otherAirdropItems } = useMemo(() => {
     const lowerCaseAddress = address?.toLowerCase();
-    if (!lowerCaseAddress) return { ownAirdropItems: [], otherAirdropItems: airdropItemsFetcher.data || [] };
+    const airdropItems = airdropItemsFetcher.data?.airdropItems;
+    if (!lowerCaseAddress) return { ownAirdropItems: [], otherAirdropItems: airdropItems || [] };
     let ownAirdropItems: AirdropItem[] = [];
     const otherAirdropItems: AirdropItem[] = [];
-    for (const item of airdropItemsFetcher.data || []) {
+    for (const item of airdropItems || []) {
       if (item.address.toLowerCase() === lowerCaseAddress) {
         if (ownAirdropItems.length > 0) {
           console.warn("Multiple airdrop items found for the same address: ", item.address);
@@ -51,10 +62,34 @@ export default function AirdropDetailView({
     return { ownAirdropItems, otherAirdropItems };
   }, [airdropItemsFetcher.data, address]);
 
+  const merkleTree = useMemo(() => {
+    const treeData = airdropItemsFetcher.data?.merkleTree;
+    if (!treeData) return null;
+    return StandardMerkleTree.load(treeData.data as unknown as StandardMerkleTreeData<[string, string]>);
+  }, [airdropItemsFetcher.data?.merkleTree]);
+
+  const addressToProofIndexMap = useMemo(() => {
+    if (!merkleTree) return new Map<string, number>();
+    const resultMap = new Map<string, number>();
+    for (const [i, v] of merkleTree.entries()) {
+      resultMap.set(v[0].toLowerCase(), i);
+    }
+    return resultMap;
+  }, [merkleTree]);
+
+  const claimAirdrop = useCallback((itemAddress: string) => {
+    if (!merkleTree) return;
+    const proofIndex = addressToProofIndexMap.get(itemAddress.toLowerCase());
+    if (proofIndex !== undefined) {
+      const proof = merkleTree.getProof(proofIndex);
+      console.log("Proof: ", proof);
+    }
+  }, [merkleTree, addressToProofIndexMap]);
+
   const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
 
   return (
-    <div className="card bg-base-100 overflow-hidden p-4">
+    <div className="card bg-base-100 overflow-hidden p-4 flex flex-col flex-1">
       <div className="flex flex-col gap-4 overflow-hidden">
         <div className="flex flex-row gap-1 items-center">
           <NavLink to="/" className="btn btn-ghost btn-circle">
@@ -63,7 +98,7 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col flex-1 gap-4 overflow-auto">
-          {hasItems && decimals !== undefined && <table>
+          {hasItems && decimals !== undefined && <table className="table grow">
             <tbody>
               <tr>
                 <th className="p-2 border-b">Address</th>
@@ -80,7 +115,10 @@ export default function AirdropDetailView({
                   </td>
                   <td className={`${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
                     <div className="flex flex-col items-center">
-                      <button className="btn btn-xs btn-primary">Claim</button>
+                      <button
+                        className="btn btn-xs btn-primary"
+                        onClick={() => claimAirdrop(item.address)}
+                      >Claim</button>
                     </div>
                   </td>
                 </tr>
@@ -98,14 +136,17 @@ export default function AirdropDetailView({
               ))}
             </tbody>
           </table>}
-          {!airdropItemsFetcher.data ? <div>Loading items...</div> : decimals === undefined ? <div>Loading contract data...</div> : null}
-          {airdropItemsFetcher.data?.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
+          {!airdropItemsFetcher.data ? <div className="grow">Loading items...</div> : decimals === undefined ? <div className="grow">Loading contract data...</div> : null}
+          {airdropItemsFetcher.data?.airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
           {contractLoadError && <div>Error: {contractLoadError.message}</div>}
         </div>
       </div>
-      {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-4">
+      {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-auto pt-3">
         <span className="text-xs">Admin Actions</span>
-        <button className="btn btn-error btn-sm" onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}>Delete Airdrop</button>
+        <button
+          className="btn btn-error btn-sm"
+          onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
+        >Delete Airdrop</button>
       </div>}
       {isAdmin && <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
@@ -115,7 +156,11 @@ export default function AirdropDetailView({
             <form method="dialog">
               <button className="btn btn-outline">Cancel</button>
             </form>
-            <button className="btn btn-error" onClick={deleteAirdrop}>Delete</button>
+            <button
+              className="btn btn-error"
+              onClick={deleteAirdrop}
+              disabled={isSubmitting}
+            >Delete</button>
           </div>
         </div>
       </dialog>}

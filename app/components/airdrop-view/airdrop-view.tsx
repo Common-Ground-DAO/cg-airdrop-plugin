@@ -52,7 +52,7 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
   }, [airdrops, airdropId]);
 
   return (
-    <div className="flex flex-col max-h-[calc(100%-1rem)]">
+    <div className="flex flex-col h-full max-h-[calc(100%-1rem)]">
       {!airdrop && <AirdropListView airdrops={airdrops} />}
       {!!airdrop && <AirdropDetailView airdrop={airdrop} />}
     </div>

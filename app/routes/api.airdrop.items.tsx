@@ -15,5 +15,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
   });
 
-  return airdropItems;
-} 
+  const merkleTree = await prisma.merkleTree.findUnique({
+    where: {
+      airdropId: parseInt(airdropId)
+    }
+  });
+
+  return {
+    airdropItems,
+    merkleTree
+  };
+}

@@ -14,6 +14,7 @@ export async function action({ request }: { request: Request }) {
   const communityInfoRaw = formData.get("communityInfoRaw") as string;
   const userInfoRaw = formData.get("userInfoRaw") as string;
   const items = JSON.parse(formData.get("items") as string || "[]");
+  const tree = JSON.parse(formData.get("tree") as string || "null");
 
   // Todo: validate all fields?
 
@@ -62,6 +63,15 @@ export async function action({ request }: { request: Request }) {
       }
     }
   });
+
+  if (tree) {
+    await prisma.merkleTree.create({
+      data: {
+        airdropId,
+        data: tree
+      }
+    });
+  }
 
   return ({ airdropId });
 } 
