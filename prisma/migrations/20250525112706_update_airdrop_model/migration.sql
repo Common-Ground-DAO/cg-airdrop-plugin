@@ -5,7 +5,7 @@
   - Added the required column `airdropAddress` to the `Airdrop` table without a default value. This is not possible if the table is not empty.
   - Added the required column `chainId` to the `Airdrop` table without a default value. This is not possible if the table is not empty.
   - Added the required column `chainName` to the `Airdrop` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `erc20Address` to the `Airdrop` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `tokenAddress` to the `Airdrop` table without a default value. This is not possible if the table is not empty.
 
 */
 -- RedefineTables
@@ -17,7 +17,7 @@ CREATE TABLE "new_Airdrop" (
     "creatorId" TEXT NOT NULL,
     "communityId" TEXT NOT NULL,
     "airdropAddress" TEXT NOT NULL,
-    "erc20Address" TEXT NOT NULL,
+    "tokenAddress" TEXT NOT NULL,
     "chainName" TEXT NOT NULL,
     "chainId" INTEGER NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

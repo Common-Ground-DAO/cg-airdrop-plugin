@@ -27,7 +27,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
       setValidAddress(value as `0x${string}`);
       setAddressWarning(null);
     }
-    setAirdropData(old => ({ ...old, erc20Address: value as `0x${string}` }));
+    setAirdropData(old => ({ ...old, tokenAddress: value as `0x${string}` }));
   }, [airdropData, setAirdropData]);
 
   const { decimals, name: tokenName, symbol: tokenSymbol, isFetching, error } = useErc20Data(validAddress, chain?.id);
@@ -43,7 +43,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
   }, [decimals, tokenName, tokenSymbol]);
 
   const canProceed = useMemo(() => {
-    return !!airdropData.name && !!airdropData.erc20Address && typeof airdropData.decimals === "number";
+    return !!airdropData.name && !!airdropData.tokenAddress && typeof airdropData.decimals === "number";
   }, [airdropData]);
 
   return <div className="flex flex-col grow justify-start w-full px-2">
@@ -73,8 +73,8 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
           <input
             type="text"
             className="input w-full"
-            id="erc20Address"
-            value={airdropData.erc20Address || ''}
+            id="tokenAddress"
+            value={airdropData.tokenAddress || ''}
             onChange={(e) => setAddress(e.target.value)}
           />
           {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}

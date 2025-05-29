@@ -20,7 +20,7 @@ model Airdrop {
   creatorId        String
   communityId      String
   airdropAddress   String
-  erc20Address     String
+  tokenAddress     String
   chainName        String
   chainId          Int
   createdAt        DateTime       @default(now())

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useReadContract } from "wagmi";
 import type { erc20Abi } from "viem";
 import type { AirdropClaim__factory, ERC20__factory } from "~/contracts";
+import type { lsp7DigitalAssetAbi, lsp4DigitalAssetMetadataAbi } from "@lukso/lsp-smart-contracts/abi";
+import { INTERFACE_IDS, INTERFACE_ID_LSP7_PREVIOUS } from "@lukso/lsp-smart-contracts/constants";
 
 let _airdropFactory: typeof AirdropClaim__factory | null = null;
 let _erc20Factory: typeof ERC20__factory | null = null;
@@ -66,7 +68,7 @@ export function useErc20ContractFactory() {
 }
 
 let _erc20Abi: typeof erc20Abi | null = null;
-export function useErc20Data(address?: `0x${string}`, chainId?: number) {
+export function useErc20Abi() {
     const [abi, setAbi] = useState<typeof erc20Abi | null>(_erc20Abi);
 
     useEffect(() => {
@@ -83,24 +85,107 @@ export function useErc20Data(address?: `0x${string}`, chainId?: number) {
             mounted = false;
         };
     }, []);
+
+    return abi;
+}
+
+let _lsp7Abi: typeof lsp7DigitalAssetAbi | null = null;
+export function useLsp7Abi() {
+    const [abi, setAbi] = useState<typeof lsp7DigitalAssetAbi | null>(_lsp7Abi);
     
+    useEffect(() => {
+        if (abi) return;
+        let mounted = true;
+        (async () => {
+            const { lsp7DigitalAssetAbi } = await import("@lukso/lsp-smart-contracts/abi");
+            _lsp7Abi = lsp7DigitalAssetAbi;
+            if (mounted) {
+                setAbi(lsp7DigitalAssetAbi);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    return abi;
+}
+
+let _lsp4Abi: typeof lsp4DigitalAssetMetadataAbi | null = null;
+export function useLsp4Abi() {
+    const [abi, setAbi] = useState<typeof lsp4DigitalAssetMetadataAbi | null>(_lsp4Abi);
+    
+    useEffect(() => {
+        if (abi) return;
+        let mounted = true;
+        (async () => {
+            const { lsp4DigitalAssetMetadataAbi } = await import("@lukso/lsp-smart-contracts/abi");
+            _lsp4Abi = lsp4DigitalAssetMetadataAbi;
+            if (mounted) {
+                setAbi(lsp4DigitalAssetMetadataAbi);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    return abi;
+}
+
+export function useErc20Data(address?: `0x${string}`, chainId?: number) {
+    const erc20Abi = useErc20Abi();
+    const lsp7Abi = useLsp7Abi();
+
+    const { data: isERC165, isFetching: isFetchingIsERC165, error: errorIsERC165 } = useReadContract({
+        address,
+        abi: lsp7Abi || [],
+        functionName: "supportsInterface",
+        chainId,
+        args: ["0x01ffc9a7"],
+    });
+
+    const { data: isLSP7_current, isFetching: isFetchingIsLSP7_current, error: errorIsLSP7_current } = useReadContract({
+        address,
+        abi: lsp7Abi || [],
+        functionName: "supportsInterface",
+        chainId,
+        args: [INTERFACE_IDS.LSP7DigitalAsset],
+    });
+
+    const { data: isLSP7_v0_12_0, isFetching: isFetchingIsLSP7_v0_12_0, error: errorIsLSP7_v0_12_0 } = useReadContract({
+        address,
+        abi: lsp7Abi || [],
+        functionName: "supportsInterface",
+        chainId,
+        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.12.0"] as `0x${string}`],
+    });
+
+    const { data: isLSP7_v0_14_0, isFetching: isFetchingIsLSP7_v0_14_0, error: errorIsLSP7_v0_14_0 } = useReadContract({
+        address,
+        abi: lsp7Abi || [],
+        functionName: "supportsInterface",
+        chainId,
+        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.14.0"] as `0x${string}`],
+    });
+
     const { data: decimals, isFetching: isFetchingDecimals, error: errorDecimals } = useReadContract({
         address,
-        abi: abi || [],
+        abi: erc20Abi || [],
         functionName: "decimals",
         chainId,
     });
 
     const { data: name, isFetching: isFetchingName, error: errorName } = useReadContract({
         address,
-        abi: abi || [],
+        abi: erc20Abi || [],
         functionName: "name",
         chainId,
     });
     
     const { data: symbol, isFetching: isFetchingSymbol, error: errorSymbol } = useReadContract({
         address,
-        abi: abi || [],
+        abi: erc20Abi || [],
         functionName: "symbol",
         chainId,
     });
@@ -109,4 +194,16 @@ export function useErc20Data(address?: `0x${string}`, chainId?: number) {
     const error = errorDecimals || errorName || errorSymbol;
 
     return { decimals, name, symbol, isFetching, error };
+}
+
+export function analyzeContract(address?: `0x${string}`, chainId?: number) {
+    const erc20Abi = useErc20Abi();
+    const lsp7Abi = useLsp7Abi();
+
+    const { data: decimals, isFetching: isFetchingDecimals, error: errorDecimals } = useReadContract({
+        address,
+        abi: erc20Abi || [],
+        functionName: "decimals",
+        chainId,
+    });
 }

@@ -7,7 +7,7 @@ export async function action({ request }: { request: Request }) {
   const name = formData.get("name") as string;
   const creatorId = formData.get("creatorId") as string;
   const communityId = formData.get("communityId") as string;
-  const erc20Address = formData.get("erc20Address") as string;
+  const tokenAddress = formData.get("tokenAddress") as string;
   const chainId = formData.get("chainId") as string;
   const chainName = formData.get("chainName") as string;
   const airdropAddress = formData.get("airdropAddress") as string;
@@ -52,7 +52,7 @@ export async function action({ request }: { request: Request }) {
       name,
       creatorId,
       communityId,
-      erc20Address,
+      tokenAddress,
       chainId: parseInt(chainId),
       chainName,
       airdropAddress,

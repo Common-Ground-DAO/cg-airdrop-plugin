@@ -2,10 +2,17 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@lukso/lsp-smart-contracts/lsp7-contracts/contracts/LSP7DigitalAsset.sol";
+import {
+  _INTERFACEID_LSP7,
+  _INTERFACEID_LSP7_V0_12_0,
+  _INTERFACEID_LSP7_V0_14_0
+} from "@lukso/lsp7-contracts/contracts/LSP7Constants.sol";
 
 /**
  * @title AirdropClaim
@@ -18,7 +25,9 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
     bytes32 public merkleRoot;
 
     // The token being distributed
-    IERC20 public token;
+    address public token;
+    bool public isLSP7;
+    uint256 public totalClaimed;
 
     // Mapping of addresses that have claimed their tokens
     mapping(address => bool) public hasClaimed;
@@ -26,17 +35,53 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
     // Events
     event AirdropClaimed(address indexed account, uint256 amount);
     event FundsRecovered(address indexed token, uint256 amount);
-    event MerkleRootSet(bytes32 merkleRoot);
 
     /**
      * @dev Constructor to initialize the contract with the token address and merkle root
      * @param _token The token contract address
      * @param _merkleRoot The merkle root of the airdrop distribution
      */
-    constructor(IERC20 _token, bytes32 _merkleRoot) Ownable(msg.sender) {
+    constructor(address _token, bytes32 _merkleRoot) Ownable(msg.sender) {
+        // Todo: Check if Ownable is compatible with deployment through UP extension
+
         token = _token;
         merkleRoot = _merkleRoot;
-        emit MerkleRootSet(_merkleRoot);
+
+        // Check if token contract supports ERC165
+        bool isERC165 = ERC165Checker.supportsERC165(token);
+
+        if (isERC165) {
+            // Token supports ERC165, you can now check for other interfaces
+            // e.g., IERC20.interfaceId
+        } else {
+            // Token does not support ERC165, proceed with alternative verification
+        }
+
+        // Heuristic check if the token does support ERC20
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(token)
+        }
+
+        if (codeSize > 0) {
+            bool hasTotalSupply;
+            (hasTotalSupply, ) = token.staticcall(abi.encodeWithSignature("totalSupply()"));
+
+            bool hasBalanceOf;
+            (hasBalanceOf, ) = token.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
+
+            if (hasTotalSupply && hasBalanceOf) {
+                // The contract likely has these ERC20 functions.
+                // You can proceed with caution.
+            } else {
+                // The contract is missing essential ERC20 functions.
+                revert("Not a compliant ERC20 token");
+            }
+        } else {
+            revert("Address is not a contract");
+        }
+
+
     }
 
     /**
@@ -54,6 +99,7 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
 
         // Mark as claimed
         hasClaimed[msg.sender] = true;
+        totalClaimed += amount;
 
         // Transfer the tokens
         token.safeTransfer(msg.sender, amount);

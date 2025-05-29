@@ -7,14 +7,14 @@
     "dev": "prisma generate && react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "compile-contracts": "cd contracts && npx hardhat compile",
-    "generate-types": "npm run compile-contracts && mkdir -p app/contracts && cp -r contracts/typechain/* app/contracts/",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:reset": "prisma migrate reset",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "hardhat:node": "cd contracts && npx hardhat node",
+    "hardhat:compile": "cd contracts && npx hardhat compile && rm -rf ../app/contracts && mkdir -p ../app/contracts && cp -r typechain/* ../app/contracts/"
   },
   "dependencies": {
     "@common-ground-dao/cg-plugin-lib": "^0.9.13",
@@ -36,6 +36,7 @@
     "wagmi": "^2.15.4"
   },
   "devDependencies": {
+    "@lukso/lsp-smart-contracts": "^0.16.3",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",

@@ -20,13 +20,13 @@ export default function AirdropDetailView({
   }>();
   const submit = useSubmit();
   const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
-  const { decimals, error: contractLoadError } = useErc20Data(airdrop.erc20Address as `0x${string}`, airdrop.chainId);
+  const { decimals, error: contractLoadError } = useErc20Data(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (airdrop?.id === undefined) return;
-    airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/items` });
+    airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/details` });
   }, [airdrop?.id]);
 
   const deleteAirdrop = useCallback(async () => {
@@ -154,7 +154,7 @@ export default function AirdropDetailView({
           <p className="py-4">This action cannot be undone.</p>
           <div className="modal-action">
             <form method="dialog">
-              <button className="btn btn-outline">Cancel</button>
+              <button className="btn btn-soft">Cancel</button>
             </form>
             <button
               className="btn btn-error"

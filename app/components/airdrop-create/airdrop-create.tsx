@@ -5,7 +5,7 @@ import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from 
 
 export interface AirdropData {
   name?: string;
-  erc20Address?: `0x${string}`;
+  tokenAddress?: `0x${string}`;
   decimals?: number;
   tokenName?: string;
   tokenSymbol?: string;
@@ -28,7 +28,7 @@ export default function AirdropView() {
         ...old,
         chainId: chain?.id,
         chainName: chain?.name,
-        erc20Address: undefined,
+        tokenAddress: undefined,
         tokenName: undefined,
         tokenSymbol: undefined,
         decimals: undefined,
@@ -44,7 +44,7 @@ export default function AirdropView() {
         <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload CSV</li>
         <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy</li>
       </ul>
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
         {step === 0 && <AirdropSetupStepOne airdropData={airdropData} setAirdropData={setAirdropData} setStep={setStep} />}
         {step === 1 && <AirdropSetupStepTwo airdropData={airdropData} csvResult={csvResult} setCsvResult={setCsvResult} setStep={setStep} />}
         {step === 2 && <AirdropSetupStepThree airdropData={airdropData} csvResult={csvResult!} setStep={setStep} />}
