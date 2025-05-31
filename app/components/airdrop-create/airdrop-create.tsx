@@ -1,19 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { CsvUploadResult } from "../csv-upload-button/csv-upload-button";
 import { useAccount } from "wagmi";
 import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from "./steps";
+import type { TokenData } from "~/hooks/token-data";
 
 export interface AirdropData {
   name?: string;
   tokenAddress?: `0x${string}`;
-  decimals?: number;
-  tokenName?: string;
-  tokenSymbol?: string;
   chainId?: number;
   chainName?: string;
+  tokenData?: TokenData;
 }
 
-export default function AirdropView() {
+export default function AirdropCreate() {
   const [step, setStep] = useState(0);
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
   const { chain } = useAccount();
@@ -29,9 +28,7 @@ export default function AirdropView() {
         chainId: chain?.id,
         chainName: chain?.name,
         tokenAddress: undefined,
-        tokenName: undefined,
-        tokenSymbol: undefined,
-        decimals: undefined,
+        tokenData: undefined,
       }));
     }
   }, [chain, airdropData.chainId, airdropData.chainName, step]);

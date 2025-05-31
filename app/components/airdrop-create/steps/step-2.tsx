@@ -1,7 +1,7 @@
 import CsvUploadButton, { type CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import FormatUnits from "../../format-units/format-units";
 import type { AirdropData } from "../airdrop-create";
-import { TokenInfo } from ".";
+import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 interface StepTwoProps {
   csvResult: CsvUploadResult | null;
@@ -40,7 +40,7 @@ const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: 
                   {row[0]}
                 </td>
                 <td className={`p-2 ${index === csvResult.rows.length - 1 ? "" : "border-b"}`}>
-                  <FormatUnits value={row[1]} decimals={airdropData.decimals || 0} />
+                  <FormatUnits value={row[1]} decimals={airdropData.tokenData?.decimals || 0} />
                 </td>
               </tr>
             ))}
@@ -50,7 +50,7 @@ const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: 
     )}
 
     <div className="flex flex-col items-center gap-2 mt-auto">
-      <TokenInfo tokenName={airdropData.tokenName} tokenSymbol={airdropData.tokenSymbol} decimals={airdropData.decimals} />
+      <TokenMetadataDisplay tokenData={airdropData.tokenData} />
       <div className="flex flex-row gap-2">
         <button
           className="btn btn-primary"

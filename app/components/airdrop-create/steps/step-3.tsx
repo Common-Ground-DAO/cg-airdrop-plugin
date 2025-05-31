@@ -5,10 +5,9 @@ import { useAirdropContractFactory } from "~/hooks";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
-import { TokenInfo } from ".";
 import { FaRegCircle, FaRegCircleCheck } from "react-icons/fa6";
 import { PiSpinnerBold } from "react-icons/pi";
-import { MdErrorOutline } from "react-icons/md";
+import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 interface StepThreeProps {
   airdropData: AirdropData;
@@ -137,7 +136,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
                 </tr>
                 <tr>
                   <td>Decimals</td>
-                  <td>{airdropData.decimals}</td>
+                  <td>{airdropData.tokenData?.decimals}</td>
                 </tr>
                 <tr>
                   <td>Contract Address</td>
@@ -172,7 +171,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
       </div>
     </div>
     <div className="flex flex-col items-center gap-2 mt-auto">
-      <TokenInfo tokenName={airdropData.tokenName} tokenSymbol={airdropData.tokenSymbol} decimals={airdropData.decimals} />
+      <TokenMetadataDisplay tokenData={airdropData.tokenData} />
       <div className="flex flex-row gap-2">
         {!inProgress && <>
           <button

@@ -4,10 +4,11 @@ import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
-import { useErc20Data } from "~/hooks";
+import { useTokenData } from "~/hooks";
 import { useAccount } from "wagmi";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
+import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 export default function AirdropDetailView({
   airdrop,
@@ -20,7 +21,7 @@ export default function AirdropDetailView({
   }>();
   const submit = useSubmit();
   const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
-  const { decimals, error: contractLoadError } = useErc20Data(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
+  const tokenData = useTokenData(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -98,7 +99,8 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col flex-1 gap-4 overflow-auto">
-          {hasItems && decimals !== undefined && <table className="table grow">
+          <TokenMetadataDisplay tokenData={tokenData} />
+          {hasItems && tokenData.decimals !== undefined && <table className="table grow">
             <tbody>
               <tr>
                 <th className="p-2 border-b">Address</th>
@@ -111,7 +113,7 @@ export default function AirdropDetailView({
                     <span className="text-success">{item.address}</span>
                   </td>
                   <td className={`p-2 ${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
-                    <FormatUnits className="text-right text-success" value={item.amount} decimals={decimals || 0} />
+                    <FormatUnits className="text-right text-success" value={item.amount} decimals={tokenData.decimals || 0} />
                   </td>
                   <td className={`${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
                     <div className="flex flex-col items-center">
@@ -129,16 +131,16 @@ export default function AirdropDetailView({
                     {item.address}
                   </td>
                   <td className={`p-2 ${index === otherAirdropItems.length - 1 ? "" : "border-b"}`}>
-                    <FormatUnits className="text-right" value={item.amount} decimals={decimals || 0} />
+                    <FormatUnits className="text-right" value={item.amount} decimals={tokenData.decimals || 0} />
                   </td>
                   <td className={`p-2 ${index === otherAirdropItems.length - 1 ? "" : "border-b"}`}></td>
                 </tr>
               ))}
             </tbody>
           </table>}
-          {!airdropItemsFetcher.data ? <div className="grow">Loading items...</div> : decimals === undefined ? <div className="grow">Loading contract data...</div> : null}
+          {!airdropItemsFetcher.data ? <div className="grow">Loading items...</div> : tokenData.decimals === undefined ? <div className="grow">Loading contract data...</div> : null}
           {airdropItemsFetcher.data?.airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
-          {contractLoadError && <div>Error: {contractLoadError.message}</div>}
+          {tokenData.error && <div>Error: {tokenData.error.message}</div>}
         </div>
       </div>
       {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-auto pt-3">

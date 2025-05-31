@@ -1,8 +1,8 @@
-import { useAirdropContractFactory, useAirdropAbi, useErc20ContractFactory, useErc20Data } from "./contracts";
+import { useAirdropContractFactory, useAirdropAbi } from "./contracts";
+import { useTokenData } from "./token-data";
 
 export {
     useAirdropContractFactory,
     useAirdropAbi,
-    useErc20ContractFactory,
-    useErc20Data,
+    useTokenData,
 }

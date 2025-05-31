@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
-import { TokenInfo } from ".";
 import { TbPlugConnected, TbInfoCircle } from "react-icons/tb";
-import { useErc20Data } from "~/hooks";
+import { useTokenData } from "~/hooks";
+import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 interface StepOneProps {
   airdropData: AirdropData;
@@ -30,20 +30,28 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
     setAirdropData(old => ({ ...old, tokenAddress: value as `0x${string}` }));
   }, [airdropData, setAirdropData]);
 
-  const { decimals, name: tokenName, symbol: tokenSymbol, isFetching, error } = useErc20Data(validAddress, chain?.id);
+  const tokenData = useTokenData(validAddress, chain?.id);
 
   useEffect(() => {
-    if (typeof decimals === "number") {
-      if (typeof tokenName === "string" && typeof tokenSymbol === "string") {
-        setAirdropData(old => ({ ...old, decimals, tokenName, tokenSymbol }));
-      } else {
-        setAirdropData(old => ({ ...old, decimals }));
-      }
+    if (tokenData.isFetching) {
+      setAirdropData(old => ({ ...old, tokenData }));
     }
-  }, [decimals, tokenName, tokenSymbol]);
+  }, [tokenData]);
 
   const canProceed = useMemo(() => {
-    return !!airdropData.name && !!airdropData.tokenAddress && typeof airdropData.decimals === "number";
+    const { name, tokenAddress, tokenData } = airdropData;
+
+    if (!name || !tokenAddress || !tokenData || tokenData.isFetching || tokenData.type === undefined || typeof tokenData.decimals !== "number") {
+      return false;
+    }
+    if (tokenData.type === "lsp7") {
+      return !!tokenData.lsp7Data?.lsp4TokenName && !!tokenData.lsp7Data?.lsp4TokenSymbol && !!tokenData.lsp7Data?.lsp4TokenType;
+    }
+    if (tokenData.type === "erc20") {
+      return !!tokenData.erc20Data?.name && !!tokenData.erc20Data?.symbol;
+    }
+    
+    return true;
   }, [airdropData]);
 
   return <div className="flex flex-col grow justify-start w-full px-2">
@@ -69,7 +77,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
           />
         </fieldset>
         <fieldset className="fieldset w-full">
-          <legend className="fieldset-legend">ERC20 Contract Address on {chain?.name || "unknown"}</legend>
+          <legend className="fieldset-legend">Token Address on {chain?.name || "unknown"}</legend>
           <input
             type="text"
             className="input w-full"
@@ -79,14 +87,14 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
           />
           {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}
         </fieldset>
-        {error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-hidden">{error.message}</p>}
+        {tokenData.error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-hidden">{tokenData.error.message}</p>}
         <div className="flex flex-col items-center gap-2 mt-auto">
-          <TokenInfo tokenName={airdropData.tokenName} tokenSymbol={airdropData.tokenSymbol} decimals={airdropData.decimals} />
+          <TokenMetadataDisplay tokenData={tokenData} />
           <button
             className="btn btn-primary"
             onClick={() => setStep(1)}
             disabled={!canProceed}
-          >{isFetching ? "Checking..." : canProceed ? "Next" : "Fields missing"}</button>
+          >{tokenData.isFetching ? "Checking..." : canProceed ? "Next" : "Fields missing"}</button>
         </div>
       </>}
     </div>

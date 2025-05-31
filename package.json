@@ -19,6 +19,7 @@
   "dependencies": {
     "@common-ground-dao/cg-plugin-lib": "^0.9.13",
     "@common-ground-dao/cg-plugin-lib-host": "^0.9.13",
+    "@erc725/erc725.js": "^0.28.1",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/client": "^6.8.2",
