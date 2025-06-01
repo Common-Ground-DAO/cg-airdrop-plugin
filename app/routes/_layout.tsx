@@ -4,9 +4,9 @@ import Menu from "~/components/menu/menu";
 
 export default function Layout() {
   return (
-    <div className="grid grid-rows-[72px_1fr] h-full w-full max-h-[100vh] max-w-[100vw]">
+    <div className="grid grid-cols-[100vw] grid-rows-[72px_calc(100vh-72px)] h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] overflow-hidden">
       <Header />
-      <div className="grid grid-cols-[225px_1fr] gap-4 max-h-full">
+      <div className="grid grid-cols-[225px_calc(100vw-241px)] grid-rows-[100%] gap-4 overflow-hidden">
         <Menu />
         <Outlet />
       </div>

@@ -33,19 +33,17 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
   const tokenData = useTokenData(validAddress, chain?.id);
 
   useEffect(() => {
-    if (tokenData.isFetching) {
-      setAirdropData(old => ({ ...old, tokenData }));
-    }
+    setAirdropData(old => ({ ...old, tokenData }));
   }, [tokenData]);
 
   const canProceed = useMemo(() => {
     const { name, tokenAddress, tokenData } = airdropData;
 
-    if (!name || !tokenAddress || !tokenData || tokenData.isFetching || tokenData.type === undefined || typeof tokenData.decimals !== "number") {
+    if (!name || !tokenAddress || !validAddress || !tokenData || tokenData.isFetching || tokenData.type === undefined || typeof tokenData.decimals !== "number") {
       return false;
     }
     if (tokenData.type === "lsp7") {
-      return !!tokenData.lsp7Data?.lsp4TokenName && !!tokenData.lsp7Data?.lsp4TokenSymbol && !!tokenData.lsp7Data?.lsp4TokenType;
+      return !!tokenData.lsp7Data?.lsp4TokenName && !!tokenData.lsp7Data?.lsp4TokenSymbol && tokenData.lsp7Data?.lsp4TokenType !== undefined;
     }
     if (tokenData.type === "erc20") {
       return !!tokenData.erc20Data?.name && !!tokenData.erc20Data?.symbol;
@@ -67,10 +65,10 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
           <span>You can change chain and address in your wallet app.</span>
         </p>
         <fieldset className="fieldset w-full">
-          <legend className="fieldset-legend">Airdrop Title for your community</legend>
+          <legend className="fieldset-legend">Display name for this airdrop</legend>
           <input
             type="text"
-            className="input w-full"
+            className="input w-[calc(100%-0.5rem)] ml-1"
             id="name"
             value={airdropData.name || ''}
             onChange={(e) => setAirdropData(old => ({ ...old, name: e.target.value }))}
@@ -80,15 +78,15 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
           <legend className="fieldset-legend">Token Address on {chain?.name || "unknown"}</legend>
           <input
             type="text"
-            className="input w-full"
+            className="input w-[calc(100%-0.5rem)] ml-1"
             id="tokenAddress"
             value={airdropData.tokenAddress || ''}
             onChange={(e) => setAddress(e.target.value)}
           />
           {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}
         </fieldset>
-        {tokenData.error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-hidden">{tokenData.error.message}</p>}
-        <div className="flex flex-col items-center gap-2 mt-auto">
+        {tokenData.error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-y-auto">{tokenData.error.message}</p>}
+        <div className="flex flex-col items-center gap-2 mt-auto max-w-full">
           <TokenMetadataDisplay tokenData={tokenData} />
           <button
             className="btn btn-primary"

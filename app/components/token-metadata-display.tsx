@@ -11,7 +11,7 @@ export default function TokenMetadataDisplay({ tokenData }: TokenMetadataDisplay
 
     if (tokenData.isFetching) {
         return (
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2 max-w-full">
                 <div className="animate-pulse">
                     <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                     <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -22,7 +22,7 @@ export default function TokenMetadataDisplay({ tokenData }: TokenMetadataDisplay
     }
 
     return (
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card bg-base-100 shadow-xl max-w-full">
             <div className="card-body">
                 <h2 className="card-title">
                     {tokenData.type === "erc20" ? tokenData.erc20Data?.name : tokenData.lsp7Data?.lsp4TokenName}
@@ -66,10 +66,10 @@ export default function TokenMetadataDisplay({ tokenData }: TokenMetadataDisplay
                         <div>
                             <label className="text-sm font-medium text-gray-500">LSP4 Token Type</label>
                             <div className="text-lg">
-                                {tokenData.lsp7Data?.lsp4TokenType === 0 && <span className="badge badge-success">Token</span>}
-                                {tokenData.lsp7Data?.lsp4TokenType === 1 && <span className="badge badge-warning">NFT</span>}
-                                {tokenData.lsp7Data?.lsp4TokenType === 2 && <span className="badge badge-info">Collection</span>}
-                                {tokenData.lsp7Data?.lsp4TokenType > 2 && <span className="badge badge-neutral">Custom ({tokenData.lsp7Data?.lsp4TokenType})</span>}
+                                {tokenData.lsp7Data?.lsp4TokenType === 0n && <span className="badge badge-success">Token</span>}
+                                {tokenData.lsp7Data?.lsp4TokenType === 1n && <span className="badge badge-warning">NFT</span>}
+                                {tokenData.lsp7Data?.lsp4TokenType === 2n && <span className="badge badge-info">Collection</span>}
+                                {tokenData.lsp7Data?.lsp4TokenType > 2n && <span className="badge badge-neutral">Custom ({tokenData.lsp7Data?.lsp4TokenType})</span>}
                             </div>
                         </div>
                     )}

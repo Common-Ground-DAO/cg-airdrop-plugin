@@ -17,7 +17,7 @@ export interface TokenData {
 export interface LSP7Data {
     lsp4TokenName?: string;
     lsp4TokenSymbol?: string;
-    lsp4TokenType?: number;
+    lsp4TokenType?: bigint;
     lsp4Metadata?: any;
     lsp4Creators?: string[];
     errors?: LSP7Errors;
@@ -153,14 +153,14 @@ export function useTokenData(address?: `0x${string}`, chainId?: number): TokenDa
                 decimals = decimalsResult.status === 'fulfilled' ? decimalsResult.value : undefined;
                 totalSupply = totalSupplyResult.status === 'fulfilled' ? totalSupplyResult.value : undefined;
 
-                if (tokenName.status === 'fulfilled' && tokenName.value?.value) {
+                if (tokenName.status === 'fulfilled' && tokenName.value?.value !== undefined) {
                     lsp7Data.lsp4TokenName = String(tokenName.value.value);
                 }
-                if (tokenSymbol.status === 'fulfilled' && tokenSymbol.value?.value) {
+                if (tokenSymbol.status === 'fulfilled' && tokenSymbol.value?.value !== undefined) { 
                     lsp7Data.lsp4TokenSymbol = String(tokenSymbol.value.value);
                 }
-                if (tokenType.status === 'fulfilled' && tokenType.value?.value) {
-                    lsp7Data.lsp4TokenType = Number(tokenType.value.value);
+                if (tokenType.status === 'fulfilled' && tokenType.value?.value !== null && tokenType.value?.value !== undefined) {
+                    lsp7Data.lsp4TokenType = BigInt(tokenType.value.value as any);
                 }
                 if (metadata.status === 'fulfilled' && metadata.value?.value) {
                     lsp7Data.lsp4Metadata = metadata.value.value;
