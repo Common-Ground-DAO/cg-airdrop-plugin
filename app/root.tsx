@@ -131,7 +131,7 @@ export default function App() {
       <CgDataProvider>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
-            <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200" data-theme={theme}>
+            <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200 p-0 m-0" data-theme={theme}>
               <Outlet />
             </div>
           </QueryClientProvider>

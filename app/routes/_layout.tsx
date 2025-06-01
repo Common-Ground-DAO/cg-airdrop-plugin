@@ -6,11 +6,9 @@ export default function Layout() {
   return (
     <div className="grid grid-rows-[72px_1fr] h-full w-full max-h-[100vh] max-w-[100vw]">
       <Header />
-      <div className="grid grid-cols-[auto_1fr] px-4 py-2 gap-4 max-h-full overflow-hidden">
+      <div className="grid grid-cols-[225px_1fr] gap-4 max-h-full">
         <Menu />
-        <div className="overflow-hidden">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );

@@ -90,7 +90,7 @@ export default function AirdropDetailView({
   const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
 
   return (
-    <div className="card bg-base-100 overflow-hidden p-4 flex flex-col flex-1">
+    <div className="card bg-base-100 overflow-hidden p-4 flex flex-col flex-1 mr-4 shadow-md">
       <div className="flex flex-col gap-4 overflow-hidden">
         <div className="flex flex-row gap-1 items-center">
           <NavLink to="/" className="btn btn-ghost btn-circle">

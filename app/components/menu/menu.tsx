@@ -10,7 +10,7 @@ export default function Menu() {
     const location = useLocation();
 
     return (
-        <ul className="menu bg-base-100 w-56 p-2 rounded-box self-start gap-1">
+        <ul className="menu bg-base-100 p-2 rounded-box self-start gap-1 ml-4 w-[calc(100%-1rem)] shadow-md">
             <li>
                 <NavLink
                     to="/"

@@ -26,7 +26,7 @@ export default function TokenMetadataDisplay({ tokenData }: TokenMetadataDisplay
             <div className="card-body">
                 <h2 className="card-title">
                     {tokenData.type === "erc20" ? tokenData.erc20Data?.name : tokenData.lsp7Data?.lsp4TokenName}
-                    <div className={`badge ${tokenData.type === "lsp7" ? 'badge-primary' : 'badge-secondary'}`}>
+                    <div className={`badge badge-sm ${tokenData.type === "lsp7" ? 'badge-primary' : 'badge-secondary'}`}>
                         {tokenData.type === "lsp7" ? 'LSP7' : 'ERC20'}
                     </div>
                 </h2>

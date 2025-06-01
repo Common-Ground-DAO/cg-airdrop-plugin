@@ -34,7 +34,7 @@ export default function AirdropCreate() {
   }, [chain, airdropData.chainId, airdropData.chainName, step]);
 
   return (
-    <div className="p-4 h-full flex flex-col card bg-base-100 items-center">
+    <div className="flex flex-col card bg-base-100 items-center h-[calc(100%-1rem)] max-h-[calc(100%-1rem)] mr-4 mb-4 p-4 shadow-md">
       <h1 className="text-3xl font-bold mb-4">Create Airdrop</h1>
       <ul className="steps w-md mb-4">
         <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Airdrop Details</li>
