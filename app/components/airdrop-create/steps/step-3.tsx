@@ -32,10 +32,10 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
   } = useDeployContract();
 
   // Wait for the deployment transaction to be mined
-  const { 
-    data: receipt, 
-    isLoading: isConfirming, 
-    isSuccess: isConfirmed 
+  const {
+    data: receipt,
+    isLoading: isConfirming,
+    isSuccess: isConfirmed
   } = useWaitForTransactionReceipt({
     hash: txHash,
   });
@@ -135,10 +135,6 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
                   <td>{csvResult.tree.root}</td>
                 </tr>
                 <tr>
-                  <td>Decimals</td>
-                  <td>{airdropData.tokenData?.decimals}</td>
-                </tr>
-                <tr>
                   <td>Contract Address</td>
                   <td>{receipt?.contractAddress || "Not deployed yet"}</td>
                 </tr>
@@ -150,6 +146,11 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
             </table>
           </div>
         </div>
+        <TokenMetadataDisplay
+          tokenData={airdropData.tokenData}
+          chainName={airdropData.chainName}
+          tokenAddress={airdropData.tokenAddress}
+        />
         <div role="alert" className="alert alert-info">
           <div className="flex flex-col items-start gap-2 col-span-2">
             <div className="font-bold w-full text-center">Status</div>
@@ -170,8 +171,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
         {error && <div className="alert alert-error rounded-lg w-full p-3 wrap-anywhere">{error}</div>}
       </div>
     </div>
-    <div className="flex flex-col items-center gap-2 mt-auto">
-      <TokenMetadataDisplay tokenData={airdropData.tokenData} />
+    <div className="flex flex-col items-center gap-2 mt-auto mb-2">
       <div className="flex flex-row gap-2">
         {!inProgress && <>
           <button

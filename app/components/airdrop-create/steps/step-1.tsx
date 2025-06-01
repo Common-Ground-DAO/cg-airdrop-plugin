@@ -1,40 +1,26 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TbPlugConnected, TbInfoCircle } from "react-icons/tb";
-import { useTokenData } from "~/hooks";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
+import type { TokenData } from "~/hooks/token-data";
 
 interface StepOneProps {
   airdropData: AirdropData;
   setAirdropData: React.Dispatch<React.SetStateAction<AirdropData>>;
   setStep: React.Dispatch<React.SetStateAction<number>>;
+  validAddress?: `0x${string}` | undefined;
 }
 
-const addressRegex = /^(0x)?[0-9a-fA-F]{40}$/;
-
-const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOneProps) => {
+const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep, validAddress }: StepOneProps) => {
   const { isConnected, chain } = useAccount();
-  const [addressWarning, setAddressWarning] = useState<string | null>(null);
-  const [validAddress, setValidAddress] = useState<`0x${string}` | undefined>(undefined);
 
-  const setAddress = useCallback((value: string) => {
-    value = value.trim();
-    if (!addressRegex.test(value)) {
-      setValidAddress(undefined);
-      setAddressWarning("Invalid address");
-    } else {
-      setValidAddress(value as `0x${string}`);
-      setAddressWarning(null);
+  const addressWarning = useMemo(() => {
+    if (validAddress || !airdropData.tokenAddress) {
+      return null;
     }
-    setAirdropData(old => ({ ...old, tokenAddress: value as `0x${string}` }));
-  }, [airdropData, setAirdropData]);
-
-  const tokenData = useTokenData(validAddress, chain?.id);
-
-  useEffect(() => {
-    setAirdropData(old => ({ ...old, tokenData }));
-  }, [tokenData]);
+    return "Invalid address";
+  }, [validAddress, airdropData.tokenAddress]);
 
   const canProceed = useMemo(() => {
     const { name, tokenAddress, tokenData } = airdropData;
@@ -51,6 +37,8 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
     
     return true;
   }, [airdropData]);
+
+  const tokenData = airdropData.tokenData;
 
   return <div className="flex flex-col grow justify-start w-full px-2">
     <div className="flex flex-col grow gap-4 max-w-md w-md mx-auto items-center">
@@ -81,18 +69,24 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep }: StepOnePr
             className="input w-[calc(100%-0.5rem)] ml-1"
             id="tokenAddress"
             value={airdropData.tokenAddress || ''}
-            onChange={(e) => setAddress(e.target.value)}
+            onChange={(e) => setAirdropData(old => ({ ...old, tokenAddress: e.target.value as `0x${string}` }))}
           />
           {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}
         </fieldset>
-        {tokenData.error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-y-auto">{tokenData.error.message}</p>}
-        <div className="flex flex-col items-center gap-2 mt-auto max-w-full">
-          <TokenMetadataDisplay tokenData={tokenData} />
+        <div className="w-[calc(100%-0.5rem)] ml-1 max-w-[calc(100%-0.5rem)] mt-4">
+          <TokenMetadataDisplay
+            tokenData={airdropData.tokenData}
+            chainName={airdropData.chainName}
+            tokenAddress={airdropData.tokenAddress}
+          />
+        </div>
+        {tokenData?.error && <p className="text-sm text-red-400 max-h-28 text-ellipsis overflow-y-auto">{tokenData.error.message}</p>}
+        <div className="flex flex-col items-center gap-2 mt-auto mb-2 max-w-full">
           <button
             className="btn btn-primary"
             onClick={() => setStep(1)}
             disabled={!canProceed}
-          >{tokenData.isFetching ? "Checking..." : canProceed ? "Next" : "Fields missing"}</button>
+          >{tokenData?.isFetching ? "Checking..." : canProceed ? "Next" : "Fields missing"}</button>
         </div>
       </>}
     </div>

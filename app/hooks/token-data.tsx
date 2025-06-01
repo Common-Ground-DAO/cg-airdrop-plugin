@@ -48,7 +48,7 @@ export function useTokenData(address?: `0x${string}`, chainId?: number): TokenDa
     const lsp7Abi = useLsp7Abi();
     const lsp4Abi = useLsp4Abi();
     const client = usePublicClient({ chainId });
-    const [tokenData, setTokenData] = useState<TokenData>({ isFetching: true });
+    const [tokenData, setTokenData] = useState<TokenData>({ isFetching: false });
 
     const analyzeContract = useCallback(async (caller: { mounted: boolean }) => {
         if (!client || !lsp4Abi || !lsp7Abi || !erc20Abi || !address || !caller.mounted) return;

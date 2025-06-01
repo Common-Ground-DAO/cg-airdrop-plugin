@@ -1,7 +1,7 @@
+import { useMemo } from "react";
 import CsvUploadButton, { type CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import FormatUnits from "../../format-units/format-units";
 import type { AirdropData } from "../airdrop-create";
-import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 interface StepTwoProps {
   csvResult: CsvUploadResult | null;
@@ -11,6 +11,15 @@ interface StepTwoProps {
 }
 
 const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: StepTwoProps) => {
+  const decimals = airdropData.tokenData?.decimals;
+  const airdropTotal = useMemo(() => {
+    let total = 0n;
+    for (const item of csvResult?.rows || []) {
+      total = total + BigInt(item[1]);
+    }
+    return total;
+  }, [csvResult?.rows]);
+
   return <div className="h-full flex flex-col items-center">
     <div className="flex flex-col mb-4 items-center max-w-md">
       {!csvResult && <>
@@ -21,11 +30,17 @@ const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: 
           "0x1234567890123456789012345678901234567891","200"
         </div>
       </>}
-      {!!csvResult && <p>CSV upload successful.</p>}
+      {!!csvResult && typeof decimals === "number" && <>
+        <div>Upload successful!</div>
+        <div className="flex flex-row items-center gap-2">
+          <span>Total airdrop:</span>
+          <FormatUnits decimals={decimals} value={airdropTotal.toString()} />
+        </div>
+      </>}
     </div>
 
     {!!csvResult && (
-      <div className="flex-1 overflow-auto mb-4 bg-white rounded-lg border border-base-300">
+      <div className="flex-1 overflow-auto mb-4 bg-white rounded-lg border border-base-300 max-w-md">
         <table className="table w-full font-mono text-black text-xs">
           <thead className="sticky top-0 bg-white">
             <tr>
@@ -49,8 +64,7 @@ const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: 
       </div>
     )}
 
-    <div className="flex flex-col items-center gap-2 mt-auto">
-      <TokenMetadataDisplay tokenData={airdropData.tokenData} />
+    <div className="flex flex-col items-center gap-2 mt-auto mb-2">
       <div className="flex flex-row gap-2">
         <button
           className="btn btn-primary"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
+import { NavLink, useFetcher, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
@@ -99,7 +99,11 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col flex-1 gap-4 overflow-auto">
-          <TokenMetadataDisplay tokenData={tokenData} />
+          <TokenMetadataDisplay
+            tokenData={tokenData}
+            chainName={airdrop.chainName}
+            tokenAddress={airdrop.tokenAddress as `0x${string}`}
+          />
           {hasItems && tokenData.decimals !== undefined && <table className="table grow">
             <tbody>
               <tr>
