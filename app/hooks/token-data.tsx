@@ -1,7 +1,7 @@
 import { INTERFACE_ID_LSP7, INTERFACE_ID_LSP7_PREVIOUS } from "@lukso/lsp7-contracts/constants";
 import { useErc20Abi, useLsp4Abi, useLsp7Abi } from "./contracts";
-import { useReadContract, useConnectorClient, usePublicClient } from "wagmi";
-import { useEffect, useMemo, useState } from "react";
+import { useReadContract, usePublicClient, useConnectorClient } from "wagmi";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface TokenData {
     isERC165?: boolean;
@@ -46,154 +46,85 @@ interface ERC20Errors {
 export function useTokenData(address?: `0x${string}`, chainId?: number): TokenData {
     const erc20Abi = useErc20Abi();
     const lsp7Abi = useLsp7Abi();
-    // const lsp4Abi = useLsp4Abi();
+    const lsp4Abi = useLsp4Abi();
+    const client = usePublicClient({ chainId });
+    const [tokenData, setTokenData] = useState<TokenData>({ isFetching: true });
 
-    const { data: isERC165, isFetching: isFetchingIsERC165, error: errorIsERC165 } = useReadContract({
-        address,
-        abi: lsp7Abi || [],
-        functionName: "supportsInterface",
-        chainId,
-        args: ["0x01ffc9a7"],
-    });
+    const analyzeContract = useCallback(async (caller: { mounted: boolean }) => {
+        if (!client || !lsp4Abi || !lsp7Abi || !erc20Abi || !address || !caller.mounted) return;
+        setTokenData({ isFetching: true });
+        
+        let isLSP7 = false;
+        let isERC20 = false;
+        let decimals: number | undefined;
+        let totalSupply: bigint | undefined;
+        const lsp7Data: LSP7Data = {};
+        const erc20Data: ERC20Data = {};
+        const newTokenData: TokenData = {
+            isERC165: false,
+            isFetching: false,
+        };
 
-    const { data: isLSP7_current, isFetching: isFetchingIsLSP7_current, error: errorIsLSP7_current } = useReadContract({
-        address: isERC165 ? address : undefined,
-        abi: lsp7Abi || [],
-        functionName: "supportsInterface",
-        chainId,
-        args: [INTERFACE_ID_LSP7],
-    });
-
-    const { data: isLSP7_v0_12_0, isFetching: isFetchingIsLSP7_v0_12_0, error: errorIsLSP7_v0_12_0 } = useReadContract({
-        address: isERC165 ? address : undefined,
-        abi: lsp7Abi || [],
-        functionName: "supportsInterface",
-        chainId,
-        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.12.0"] as `0x${string}`],
-    });
-
-    const { data: isLSP7_v0_14_0, isFetching: isFetchingIsLSP7_v0_14_0, error: errorIsLSP7_v0_14_0 } = useReadContract({
-        address: isERC165 ? address : undefined,
-        abi: lsp7Abi || [],
-        functionName: "supportsInterface",
-        chainId,
-        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.14.0"] as `0x${string}`],
-    });
-
-    const isLSP7 = useMemo(() => {
-        // returns whether the contract is LSP7, and undefined while unclear
-        if (isLSP7_current || isLSP7_v0_12_0 || isLSP7_v0_14_0) {
-            return true;
-        }
-        if (errorIsERC165 || isERC165 === false || (isLSP7_current === false && isLSP7_v0_12_0 === false && isLSP7_v0_14_0 === false)) {
-            return false;
-        }
-        return undefined;
-    }, [isLSP7_current, isLSP7_v0_12_0, isLSP7_v0_14_0, isERC165, errorIsERC165]);
-
-    // ERC20 calls
-    const { data: totalSupply, isFetching: isFetchingTotalSupply, error: errorTotalSupply } = useReadContract({
-        address,
-        abi: erc20Abi || [],
-        functionName: "totalSupply",
-        chainId,
-    });
-
-    const { data: decimals, isFetching: isFetchingDecimals, error: errorDecimals } = useReadContract({
-        address,
-        abi: erc20Abi || [],
-        functionName: "decimals", 
-        chainId,
-    });
-
-    const { data: erc20Name, isFetching: isFetchingErc20Name, error: errorErc20Name } = useReadContract({
-        address: isLSP7 === false ? address : undefined,
-        abi: erc20Abi || [],
-        functionName: "name",
-        chainId,
-    });
-    
-    const { data: erc20Symbol, isFetching: isFetchingErc20Symbol, error: errorErc20Symbol } = useReadContract({
-        address: isLSP7 === false ? address : undefined,
-        abi: erc20Abi || [],
-        functionName: "symbol",
-        chainId,
-    });
-
-    const tokenType: "erc20" | "lsp7" | undefined = useMemo(() => {
-        if (isLSP7 === false && typeof erc20Name === "string" && typeof erc20Symbol === "string" && typeof decimals === "number") {
-            return "erc20";
-        }
-        if (isLSP7 === true) {
-            return "lsp7";
-        }
-        return undefined;
-    }, [isLSP7, erc20Name, erc20Symbol]);
-
-    const { lsp7Data, isFetching: isFetchingLsp7Data, error: errorLsp7Data } = useLsp7Metadata(tokenType === "lsp7" ? address : undefined, tokenType === "lsp7" ? chainId : undefined);
-
-    const erc20Data = useMemo(() => {
-        if (tokenType === "erc20") {
-            return {
-                name: erc20Name,
-                symbol: erc20Symbol,
-            };
-        }
-        return undefined;
-    }, [tokenType, erc20Name, erc20Symbol]);
-
-    const isFetching = isFetchingTotalSupply || isFetchingDecimals || isFetchingErc20Name || isFetchingErc20Symbol || isFetchingLsp7Data;
-    const error =
-        errorTotalSupply ||
-        errorDecimals ||
-        errorErc20Name ||
-        errorErc20Symbol ||
-        errorLsp7Data ||
-        lsp7Data?.errors?.[Object.keys(lsp7Data?.errors || {})[0] as keyof LSP7Errors]
-
-    const tokenData = useMemo(() => ({
-        isERC165,
-        type: tokenType,
-        totalSupply,
-        decimals,
-        erc20Data,
-        lsp7Data,
-        isFetching,
-        error,
-    }), [isERC165, tokenType, totalSupply, decimals, erc20Data, lsp7Data, isFetching, error]);
-
-    return tokenData;
-}
-
-// New hook specifically for LSP7 metadata using erc725.js
-function useLsp7Metadata(address?: `0x${string}`, chainId?: number) {
-    const [lsp7Data, setLsp7Data] = useState<LSP7Data | undefined>(undefined);
-    const [isFetching, setIsFetching] = useState(!!address && chainId !== undefined);
-    const [error, setError] = useState<any>(null);
-
-    // Get public client instead of connector client for ERC725.js
-    const publicClient = usePublicClient({ chainId });
-
-    useEffect(() => {
-        if (!address || chainId === undefined || !publicClient) {
-            setLsp7Data(undefined);
-            return;
+        try {
+            newTokenData.isERC165 = await client.readContract({
+                address,
+                abi: lsp4Abi,
+                functionName: "supportsInterface",
+                args: ["0x01ffc9a7"],
+            });
+        } catch (error) {
+            console.info("Contract is not ERC165");
         }
 
-        let mounted = true;
-        setIsFetching(true);
-        setError(null);
+        if (!caller.mounted) return;
+        
+        if (newTokenData.isERC165) {
+            try {
+                const [isLSP7_current, isLSP7_v0_12_0, isLSP7_v0_14_0, _isERC20] = await Promise.all([
+                    client.readContract({
+                        address,
+                        abi: lsp4Abi,
+                        functionName: "supportsInterface",
+                        args: [INTERFACE_ID_LSP7],
+                    }),
+                    client.readContract({
+                        address,
+                        abi: lsp4Abi,
+                        functionName: "supportsInterface",
+                        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.12.0"] as `0x${string}`],
+                    }),
+                    client.readContract({
+                        address,
+                        abi: lsp4Abi,
+                        functionName: "supportsInterface",
+                        args: [INTERFACE_ID_LSP7_PREVIOUS["v0.14.0"] as `0x${string}`],
+                    }),
+                    client.readContract({
+                        address,
+                        abi: lsp4Abi,
+                        functionName: "supportsInterface",
+                        args: ["0x36372b07"], // ERC20 interface ID
+                    }),
+                ]);
 
-        const fetchMetadata = async () => {
+                isLSP7 = isLSP7_current || isLSP7_v0_12_0 || isLSP7_v0_14_0;
+                isERC20 = _isERC20;
+            } catch (error) {
+                console.info("Contract is not LSP7");
+            }
+        }
+
+        if (isLSP7) {
             try {
                 // Dynamic import to avoid SSR issues
                 const { ERC725 } = await import('@erc725/erc725.js');
                 const lsp4Schema = await import('@erc725/erc725.js/schemas/LSP4DigitalAsset.json');
+                if (!caller.mounted) return;
 
                 const erc725js = new ERC725(
                     lsp4Schema.default || lsp4Schema,
                     address,
-                    publicClient.transport.url, // Use the RPC URL from the public client
+                    client.transport.url, // Use the RPC URL from the public client
                     {
                         // ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
                         ipfsGateway: 'https://dweb.link/ipfs',
@@ -201,91 +132,144 @@ function useLsp7Metadata(address?: `0x${string}`, chainId?: number) {
                 );
 
                 // Fetch all LSP4 data
-                const [tokenName, tokenSymbol, tokenType, metadata, creators] = await Promise.allSettled([
+                const [tokenName, tokenSymbol, tokenType, metadata, creators, decimalsResult, totalSupplyResult] = await Promise.allSettled([
                     erc725js.fetchData('LSP4TokenName'),
                     erc725js.fetchData('LSP4TokenSymbol'),
                     erc725js.fetchData('LSP4TokenType'),
                     erc725js.fetchData('LSP4Metadata'),
                     erc725js.fetchData('LSP4Creators[]'),
+                    client.readContract({
+                        address,
+                        abi: lsp7Abi,
+                        functionName: "decimals",
+                    }),
+                    client.readContract({
+                        address,
+                        abi: lsp7Abi,
+                        functionName: "totalSupply",
+                    }),
                 ]);
 
-                if (!mounted) return;
-
-                const result: LSP7Data = {};
+                decimals = decimalsResult.status === 'fulfilled' ? decimalsResult.value : undefined;
+                totalSupply = totalSupplyResult.status === 'fulfilled' ? totalSupplyResult.value : undefined;
 
                 if (tokenName.status === 'fulfilled' && tokenName.value?.value) {
-                    result.lsp4TokenName = String(tokenName.value.value);
+                    lsp7Data.lsp4TokenName = String(tokenName.value.value);
                 }
                 if (tokenSymbol.status === 'fulfilled' && tokenSymbol.value?.value) {
-                    result.lsp4TokenSymbol = String(tokenSymbol.value.value);
+                    lsp7Data.lsp4TokenSymbol = String(tokenSymbol.value.value);
                 }
                 if (tokenType.status === 'fulfilled' && tokenType.value?.value) {
-                    result.lsp4TokenType = Number(tokenType.value.value);
+                    lsp7Data.lsp4TokenType = Number(tokenType.value.value);
                 }
                 if (metadata.status === 'fulfilled' && metadata.value?.value) {
-                    result.lsp4Metadata = metadata.value.value;
+                    lsp7Data.lsp4Metadata = metadata.value.value;
                 }
                 if (creators.status === 'fulfilled' && Array.isArray(creators.value?.value)) {
-                    result.lsp4Creators = creators.value.value as string[];
+                    lsp7Data.lsp4Creators = creators.value.value as string[];
                 }
 
                 if (tokenName.status === 'rejected') {
-                    result.errors = {
-                        ...result.errors,
+                    lsp7Data.errors = {
+                        ...lsp7Data.errors,
                         lsp4TokenName: tokenName.reason,
                     };
                 }
                 if (tokenSymbol.status === 'rejected') {
-                    result.errors = {
-                        ...result.errors,
+                    lsp7Data.errors = {
+                        ...lsp7Data.errors,
                         lsp4TokenSymbol: tokenSymbol.reason,
                     };
                 }
                 if (tokenType.status === 'rejected') {
-                    result.errors = {
-                        ...result.errors,
+                    lsp7Data.errors = {
+                        ...lsp7Data.errors,
                         lsp4TokenType: tokenType.reason,
                     };
                 }
                 if (metadata.status === 'rejected') {
-                    result.errors = {
-                        ...result.errors,
+                    lsp7Data.errors = {
+                        ...lsp7Data.errors,
                         lsp4Metadata: metadata.reason,
                     };
                 }
                 if (creators.status === 'rejected') {
-                    result.errors = {
-                        ...result.errors,
+                    lsp7Data.errors = {
+                        ...lsp7Data.errors,
                         lsp4Creators: creators.reason,
                     };
                 }
 
-                setLsp7Data(result);
+                if (decimals !== undefined && totalSupply !== undefined && tokenName.status === 'fulfilled' && tokenSymbol.status === 'fulfilled' && tokenType.status === 'fulfilled' && metadata.status === 'fulfilled' && creators.status === 'fulfilled') {
+                    newTokenData.type = "lsp7";
+                    newTokenData.decimals = decimals;
+                    newTokenData.totalSupply = totalSupply;
+                    newTokenData.lsp7Data = lsp7Data;
+                }
             } catch (error) {
-                console.error('Error fetching LSP7 metadata:', error);
-                if (!mounted) return;
-                setLsp7Data({
-                    errors: {
-                        otherError: error instanceof Error ? error.message : 'Failed to fetch metadata',
-                    },
-                });
+                console.warn("Error fetching LSP7 metadata:", error);
             }
-        };
+        }
+        else {
+            try {
+                if (!caller.mounted) return;
 
-        fetchMetadata().finally(() => {
-            setIsFetching(false);
-        });
+                const [decimalsResult, totalSupplyResult, name, symbol] = await Promise.allSettled([
+                    client.readContract({
+                        address,
+                        abi: erc20Abi,
+                        functionName: "decimals",
+                    }),
+                    client.readContract({
+                        address,
+                        abi: erc20Abi,
+                        functionName: "totalSupply",
+                    }),
+                    client.readContract({
+                        address,
+                        abi: erc20Abi,
+                        functionName: "name",
+                    }),
+                    client.readContract({
+                        address,
+                        abi: erc20Abi,
+                        functionName: "symbol",
+                    }),
+                ]);
 
+                decimals = decimalsResult.status === 'fulfilled' ? decimalsResult.value : undefined;
+                totalSupply = totalSupplyResult.status === 'fulfilled' ? totalSupplyResult.value : undefined;
+
+                if (name.status === 'fulfilled' && name.value) {
+                    erc20Data.name = String(name.value);
+                }
+                if (symbol.status === 'fulfilled' && symbol.value) {
+                    erc20Data.symbol = String(symbol.value);
+                }
+
+                if (decimals !== undefined && totalSupply !== undefined && name.status === 'fulfilled' && symbol.status === 'fulfilled') {
+                    isERC20 = true;
+                    newTokenData.type = "erc20";
+                    newTokenData.decimals = decimals;
+                    newTokenData.totalSupply = totalSupply;
+                    newTokenData.erc20Data = erc20Data;
+                }
+            } catch (error) {
+                console.warn("Error fetching ERC20 metadata:", error);
+            }
+        }
+
+        if (!caller.mounted) return;
+        setTokenData(newTokenData);
+    }, [client, lsp4Abi, address, erc20Abi, lsp7Abi]);
+
+    useEffect(() => {
+        const helper = { mounted: true };
+        analyzeContract(helper);
         return () => {
-            mounted = false;
+            helper.mounted = false;
         };
-    }, [address, chainId, publicClient]);
+    }, [analyzeContract]);
 
-    const result = useMemo(() => ({
-        lsp7Data,
-        isFetching,
-        error,
-    }), [lsp7Data, isFetching, error]);
-
-    return result;
+    return tokenData;
 }
