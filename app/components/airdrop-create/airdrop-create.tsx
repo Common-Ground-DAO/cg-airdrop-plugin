@@ -50,14 +50,14 @@ export default function AirdropCreate() {
 
   return (
     <div className="h-[calc(100%-1rem)] max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] mr-4 mb-4">
-      <div className="flex flex-col card bg-base-100 items-center h-full pt-4 pb-2 shadow-md">
+      <div className="flex flex-col card bg-base-100 items-center h-full pt-4 pb-2 shadow-lg">
         <h1 className="text-3xl font-bold mb-4">Create Airdrop</h1>
         <ul className="steps w-md mb-4">
           <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Airdrop Details</li>
           <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload CSV</li>
           <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy</li>
         </ul>
-        <div className="flex-1 flex flex-col w-full overflow-x-hidden overflow-y-auto">
+        <div className="flex-1 flex flex-col w-full overflow-hidden">
           {step === 0 && <AirdropSetupStepOne
             airdropData={airdropData}
             setAirdropData={setAirdropData}

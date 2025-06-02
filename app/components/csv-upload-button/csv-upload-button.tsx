@@ -4,6 +4,7 @@ import { useState } from "react";
 export interface CsvUploadResult {
   rows: [string, string][];
   tree: StandardMerkleTree<[string, string]>;
+  totalAmount: bigint;
 }
 
 interface CsvUploadButtonProps {
@@ -44,8 +45,9 @@ export default function CsvUploadButton({ text, icon, className, disabled, onUpl
           const treeRows = (data as { address: string, amount: string }[]).map((record) => [record.address, record.amount] as [string, string]);
           const rows = treeRows.sort((a, b) => (BigInt(b[1]) - BigInt(a[1])) > 0n ? 1 : -1);
           const tree = StandardMerkleTree.of(rows, ["address", "uint256"]);
+          const totalAmount = rows.reduce<bigint>((acc, row) => acc + BigInt(row[1]), 0n);
 
-          onUpload({ rows, tree });
+          onUpload({ rows, tree, totalAmount });
         } catch (e) {
           setError(`Error generating merkle tree: ${e instanceof Error ? e.message : String(e)}`);
         } finally {

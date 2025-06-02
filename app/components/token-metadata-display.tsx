@@ -18,7 +18,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
 
   if (tokenData.isFetching) {
     return (
-      <div className="p-4 space-y-2 w-full max-w-full">
+      <div className="p-4 space-y-2 w-full max-w-full mb-4">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -29,7 +29,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
   }
 
   return (
-    <div className="card bg-base-300 shadow-xl w-full max-w-full">
+    <div className="card bg-base-300 shadow-lg w-full max-w-full mb-4">
       <div className="card-body">
         <div className="flex flex-col">
           <div className="card-title">
@@ -104,7 +104,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
           )}
 
           {tokenData.type === "lsp7" && tokenData.lsp7Data?.lsp4Metadata && (
-            <div>
+            <div className="max-w-full">
               <label className="text-sm font-medium text-gray-500">Metadata</label>
               <div className="collapse collapse-arrow bg-base-200">
                 <input type="checkbox" />
@@ -127,20 +127,6 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
                 {tokenData.error?.message || tokenData.lsp7Data?.errors?.otherError}
               </span>
             </div>
-          )}
-
-          {/* Raw LSP4 Data (for debugging) */}
-          {tokenData.type === "lsp7" && import.meta.env.DEV && (
-            <details className="collapse bg-base-200">
-              <summary className="collapse-title text-sm">Debug: Raw LSP4 Data</summary>
-              <div className="collapse-content space-y-2 text-xs">
-                <div><strong>Name Data:</strong> {tokenData.lsp7Data?.lsp4TokenName}</div>
-                <div><strong>Symbol Data:</strong> {tokenData.lsp7Data?.lsp4TokenSymbol}</div>
-                <div><strong>Type Data:</strong> {tokenData.lsp7Data?.lsp4TokenType}</div>
-                {/*<div><strong>Metadata Data:</strong> {tokenData.lsp7Data?.lsp4Metadata}</div>
-                <div><strong>Creators Data:</strong> {tokenData.lsp7Data?.lsp4Creators}</div>*/}
-              </div>
-            </details>
           )}
         </div>
       </div>

@@ -123,24 +123,16 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
                   <td>{airdropData.name}</td>
                 </tr>
                 <tr>
-                  <td>ERC20 Address</td>
-                  <td>{airdropData.tokenAddress}</td>
-                </tr>
-                <tr>
-                  <td>Chain</td>
-                  <td>{airdropData.chainName} (chainId: {airdropData.chainId})</td>
-                </tr>
-                <tr>
                   <td>Merkle Root</td>
                   <td>{csvResult.tree.root}</td>
                 </tr>
                 <tr>
-                  <td>Contract Address</td>
-                  <td>{receipt?.contractAddress || "Not deployed yet"}</td>
+                  <td>Deployed at address</td>
+                  <td>{receipt?.contractAddress || "waiting for deployment..."}</td>
                 </tr>
                 <tr>
-                  <td>Deployment Tx</td>
-                  <td>{txHash || "Not deployed yet"}</td>
+                  <td>Deployment tx</td>
+                  <td>{txHash || "waiting for deployment..."}</td>
                 </tr>
               </tbody>
             </table>
