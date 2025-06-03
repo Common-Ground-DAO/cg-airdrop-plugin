@@ -5,10 +5,12 @@ import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { formatUnits } from "viem";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
+import { useErc20Abi } from "~/hooks/contracts";
 
 export default function AirdropDetailView({
   airdrop,
@@ -24,7 +26,15 @@ export default function AirdropDetailView({
   const tokenData = useTokenData(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fundsToAdd, _setFundsToAdd] = useState<string | undefined>(undefined);
   const airdropAbi = useAirdropAbi();
+  const erc20Abi = useErc20Abi();
+
+  const setFundsToAdd = useCallback((value: string) => {
+    if (/^\d*\.?\d*$/.test(value)) {
+      _setFundsToAdd(value);
+    }
+  }, []);
 
   useEffect(() => {
     if (airdrop?.id === undefined) return;
@@ -90,6 +100,26 @@ export default function AirdropDetailView({
     args: [],
   });
 
+  const { data: airdropContractBalance, isLoading: isLoadingAirdropContractBalance, error: airdropContractBalanceError } = useReadContract({
+    address: airdrop.tokenAddress as `0x${string}`,
+    abi: erc20Abi || [],
+    functionName: "balanceOf",
+    args: [airdrop.tokenAddress as `0x${string}`],
+  });
+
+  const missingFunds = useMemo(() => {
+    if (airdropContractBalance === undefined || totalClaimedAmount === undefined || tokenData.decimals === undefined) return 0n;
+    return totalAirdropAmount - airdropContractBalance - totalClaimedAmount;
+  }, [airdropContractBalance, totalClaimedAmount, totalAirdropAmount, tokenData.decimals]);
+
+  useEffect(() => {
+    if (fundsToAdd !== undefined) return;
+    if (missingFunds > 0n && tokenData.decimals !== undefined) {
+      const missingFundsStr = formatUnits(missingFunds, tokenData.decimals);
+      setFundsToAdd(missingFundsStr);
+    }
+  }, [fundsToAdd, missingFunds]);
+
   const claimAirdrop = useCallback((itemAddress: string) => {
     if (!merkleTree) return;
     const proofIndex = addressToProofIndexMap.get(itemAddress.toLowerCase());
@@ -111,22 +141,52 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
-          <div className="flex flex-col max-w-full justify-start gap-4">
-            <div className="flex flex-row items-center gap-2">
-              <label className="text-sm">Total airdrop amount</label>
-              <div className="flex flex-row gap-2">
-                <span className="text-sm"><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></span>
+          <div className="flex flex-col max-w-full justify-start gap-4 p-4">
+            <div className="card bg-base-300 shadow-lg">
+              <div className="card-body">
+                <table className="table w-fit">
+                  <tbody>
+                    <tr>
+                      <td>Total airdrop amount</td>
+                      <td><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></td>
+                    </tr>
+                    <tr>
+                      <td>Total claimed amount</td>
+                      <td><FormatUnits className="text-right" value={totalClaimedAmount?.toString() || "0"} decimals={tokenData.decimals || 0} /></td>
+                    </tr>
+                    <tr>
+                      <td>Airdrop contract balance</td>
+                      <td><FormatUnits className="text-right" value={airdropContractBalance?.toString() || "0"} decimals={tokenData.decimals || 0} /></td>
+                    </tr>
+                    {missingFunds > 0n && <>
+                      <tr>
+                        <td>Missing funds</td>
+                        <td><FormatUnits className="text-right" value={missingFunds.toString()} decimals={tokenData.decimals || 0} /></td>
+                      </tr>
+                      <tr>
+                        <td colSpan={2} className="text-center">
+                          <div className="join">
+                            <input type="text" className="input input-bordered join-item" value={fundsToAdd || ""} onChange={(e) => setFundsToAdd(e.target.value)} />
+                            <button className="btn btn-primary join-item">
+                              Add funds
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </>}
+                  </tbody>
+                </table>
               </div>
-              {totalClaimedAmount !== undefined && <>
-                <label className="text-sm">Total claimed amount</label>
-                <div className="flex flex-row gap-2">
-                  <span className="text-sm"><FormatUnits className="text-right" value={totalClaimedAmount.toString()} decimals={tokenData.decimals || 0} /></span>
-                </div>
-              </>}
-              {totalClaimedAmountError && <div className="flex flex-row gap-2">
-                <span className="text-sm">Error: {totalClaimedAmountError.message}</span>
-              </div>}
             </div>
+            
+
+            {(!!totalClaimedAmountError || !!airdropContractBalanceError) && <div className="alert alert-error">
+              <span className="text-sm">Error: {totalClaimedAmountError?.message || airdropContractBalanceError?.message}</span>
+            </div>}
+            {isLoadingTotalClaimedAmount || isLoadingAirdropContractBalance && <div className="flex flex-row gap-2">
+              <span className="text-sm">Loading...</span>
+            </div>}
+
             <TokenMetadataDisplay
               tokenData={tokenData}
               chainName={airdrop.chainName}
