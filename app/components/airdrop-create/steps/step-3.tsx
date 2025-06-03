@@ -180,7 +180,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
               <label className="text-sm font-medium text-gray-500">Deployment status</label>
               <div className="wrap-anywhere">
                 <div className="flex flex-col items-center">
-                  <div className="flex flex-row items-center justify-start w-full text-xs">
+                  <div className="flex flex-row items-center justify-start w-full">
                     {deploymentStatus.message}
                   </div>
                   {deploymentStatus.progress > 0
@@ -204,7 +204,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
           </div>
         </div>
         <div className="text-xl font-bold">
-          Airdropped token information
+          Airdrop token information
         </div>
         <TokenMetadataDisplay
           tokenData={airdropData.tokenData}

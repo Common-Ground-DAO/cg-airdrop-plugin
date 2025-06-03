@@ -29,14 +29,14 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep, validAddres
       return false;
     }
     if (tokenData.type === "lsp7") {
-      return !!tokenData.lsp7Data?.lsp4TokenName && !!tokenData.lsp7Data?.lsp4TokenSymbol && tokenData.lsp7Data?.lsp4TokenType !== undefined;
+      return !!tokenData.lsp7Data?.lsp4TokenName && !!tokenData.lsp7Data?.lsp4TokenSymbol;
     }
     if (tokenData.type === "erc20") {
       return !!tokenData.erc20Data?.name && !!tokenData.erc20Data?.symbol;
     }
     
     return true;
-  }, [airdropData]);
+  }, [airdropData, validAddress]);
 
   const tokenData = airdropData.tokenData;
 

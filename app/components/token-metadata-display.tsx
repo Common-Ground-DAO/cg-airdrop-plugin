@@ -5,9 +5,10 @@ interface TokenMetadataDisplayProps {
   tokenData?: TokenData;
   tokenAddress?: `0x${string}`;
   chainName?: string;
+  small?: boolean;
 }
 
-export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddress }: TokenMetadataDisplayProps) {
+export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddress, small }: TokenMetadataDisplayProps) {
   if (!tokenData) {
     return <div className="p-4 text-gray-500 w-full max-w-full text-center">No contract data provided</div>;
   }
@@ -60,7 +61,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             </div>
           </div>
 
-          {tokenData.totalSupply !== undefined && (
+          {tokenData.totalSupply !== undefined && !small && (
             <div>
               <label className="text-sm font-medium text-gray-500">Total Supply</label>
               <div className="text-lg font-mono">
@@ -74,11 +75,11 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
           )}
 
           {/* LSP7 Specific Information */}
-          {tokenData.type === "lsp7" && (
+          {tokenData.type === "lsp7" && !small && (
             <div className="divider">LSP4 Digital Asset Metadata</div>
           )}
 
-          {tokenData.type === "lsp7" && tokenData.lsp7Data?.lsp4TokenType !== undefined && (
+          {tokenData.type === "lsp7" && !small && tokenData.lsp7Data?.lsp4TokenType !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">LSP4 Token Type</label>
               <div className="text-lg">
@@ -90,7 +91,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             </div>
           )}
 
-          {tokenData.type === "lsp7" && tokenData.lsp7Data?.lsp4Creators && tokenData.lsp7Data?.lsp4Creators.length > 0 && (
+          {tokenData.type === "lsp7" && !small && tokenData.lsp7Data?.lsp4Creators && tokenData.lsp7Data?.lsp4Creators.length > 0 && (
             <div>
               <label className="text-sm font-medium text-gray-500">Creators</label>
               <div className="space-y-1">
@@ -103,15 +104,16 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             </div>
           )}
 
-          {tokenData.type === "lsp7" && tokenData.lsp7Data?.lsp4Metadata && (
+          {tokenData.type === "lsp7" && !small && tokenData.lsp7Data?.lsp4Metadata && (
             <div className="max-w-full">
               <label className="text-sm font-medium text-gray-500">Metadata</label>
               <div className="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" />
                 <div className="collapse-title text-sm font-medium">
                   View JSON Metadata
                 </div>
-                <div className="collapse-content text-xs">
-                  <pre className="overflow-auto max-h-64">
+                <div className="collapse-content text-xs max-h-56 overflow-auto">
+                  <pre className="max-w-full max-h-56">
                     {JSON.stringify(tokenData.lsp7Data?.lsp4Metadata, null, 2)}
                   </pre>
                 </div>

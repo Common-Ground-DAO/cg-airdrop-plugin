@@ -4,8 +4,8 @@ import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
-import { useTokenData } from "~/hooks";
-import { useAccount } from "wagmi";
+import { useAirdropAbi, useTokenData } from "~/hooks";
+import { useAccount, useReadContract } from "wagmi";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
@@ -24,6 +24,7 @@ export default function AirdropDetailView({
   const tokenData = useTokenData(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const airdropAbi = useAirdropAbi();
 
   useEffect(() => {
     if (airdrop?.id === undefined) return;
@@ -78,6 +79,17 @@ export default function AirdropDetailView({
     return resultMap;
   }, [merkleTree]);
 
+  const totalAirdropAmount = useMemo(() => {
+    return (airdropItemsFetcher.data?.airdropItems || []).reduce<bigint>((acc, item) => acc + BigInt(item.amount), 0n);
+  }, [airdropItemsFetcher.data?.airdropItems]);
+
+  const { data: totalClaimedAmount, isLoading: isLoadingTotalClaimedAmount, error: totalClaimedAmountError } = useReadContract({
+    address: airdrop.airdropAddress as `0x${string}`,
+    abi: airdropAbi || [],
+    functionName: "totalClaimed",
+    args: [],
+  });
+
   const claimAirdrop = useCallback((itemAddress: string) => {
     if (!merkleTree) return;
     const proofIndex = addressToProofIndexMap.get(itemAddress.toLowerCase());
@@ -98,13 +110,29 @@ export default function AirdropDetailView({
           </NavLink>
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
-        <div className="flex flex-col flex-1 gap-4 overflow-auto">
-          <TokenMetadataDisplay
-            tokenData={tokenData}
-            chainName={airdrop.chainName}
-            tokenAddress={airdrop.tokenAddress as `0x${string}`}
-          />
-          {hasItems && tokenData.decimals !== undefined && <table className="table grow">
+        <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+          <div className="flex flex-col max-w-full justify-start gap-4">
+            <div className="flex flex-row items-center gap-2">
+              <label className="text-sm">Total airdrop amount</label>
+              <div className="flex flex-row gap-2">
+                <span className="text-sm"><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></span>
+              </div>
+              {totalClaimedAmount !== undefined && <div className="flex flex-row gap-2">
+                <span className="text-sm"><FormatUnits className="text-right" value={totalClaimedAmount.toString()} decimals={tokenData.decimals || 0} /></span>
+                <span className="text-sm">Claimed</span>
+              </div>}
+              {totalClaimedAmountError && <div className="flex flex-row gap-2">
+                <span className="text-sm">Error: {totalClaimedAmountError.message}</span>
+              </div>}
+            </div>
+            <TokenMetadataDisplay
+              tokenData={tokenData}
+              chainName={airdrop.chainName}
+              tokenAddress={airdrop.tokenAddress as `0x${string}`}
+              small={true}
+            />
+          </div>
+          {hasItems && tokenData.decimals !== undefined && <table className="table w-fit">
             <tbody>
               <tr>
                 <th className="p-2 border-b">Address</th>
@@ -148,11 +176,10 @@ export default function AirdropDetailView({
         </div>
       </div>
       {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-auto pt-3">
-        <span className="text-xs">Admin Actions</span>
         <button
           className="btn btn-error btn-sm"
           onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
-        >Delete Airdrop</button>
+        >Admin: Delete Airdrop</button>
       </div>}
       {isAdmin && <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
