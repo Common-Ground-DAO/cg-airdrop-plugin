@@ -60,7 +60,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             </div>
           </div>
 
-          {tokenData.totalSupply && (
+          {tokenData.totalSupply !== undefined && (
             <div>
               <label className="text-sm font-medium text-gray-500">Total Supply</label>
               <div className="text-lg font-mono">
@@ -107,12 +107,11 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             <div className="max-w-full">
               <label className="text-sm font-medium text-gray-500">Metadata</label>
               <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
                 <div className="collapse-title text-sm font-medium">
                   View JSON Metadata
                 </div>
-                <div className="collapse-content">
-                  <pre className="text-xs overflow-auto max-h-64">
+                <div className="collapse-content text-xs">
+                  <pre className="overflow-auto max-h-64">
                     {JSON.stringify(tokenData.lsp7Data?.lsp4Metadata, null, 2)}
                   </pre>
                 </div>

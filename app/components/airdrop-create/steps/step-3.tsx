@@ -105,65 +105,128 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
 
   const inProgress = isPending || isSuccess || isConfirming || isConfirmed || fetcher.state !== "idle";
 
+  const { dataUri, downloadFileName } = useMemo(() => {
+    const treeData = {
+      rows: csvResult.rows,
+      tree: csvResult.tree.dump()
+    };
+    
+    const dataStr = JSON.stringify(treeData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ dataStr;
+    const downloadFileName = `${airdropData.name || 'airdrop'}.json`;
+    return { dataUri, downloadFileName };
+  }, [csvResult, airdropData.name]);
+
+  const deploymentStatus = useMemo(() => {
+    let progress = 0;
+    let message = "Not started";
+    if (isSuccess) { // tx signed
+      progress += 33.4;
+      message = "Tx signed";
+    }
+    else if (isPending) { // waiting for tx signature
+      progress += 16.7;
+      message = "Waiting for tx signature...";
+    }
+    
+    if (isConfirmed) { // tx confirmed
+      progress += 33.4;
+      message = "Tx confirmed";
+    }
+    else if (isConfirming) { // waiting for tx confirmation
+      progress += 16.7;
+      message = "Waiting for tx confirmation...";
+    }
+
+    if (fetcher.data) { // saved
+      progress += 33.4;
+      message = "Finished";
+    }
+    else if (fetcher.state !== "idle") { // saving
+      progress += 16.7;
+      message = "Saving to database...";
+    }
+
+    if (progress >= 99) {
+      progress = 100;
+    }
+
+    return { progress, message };
+  }, [isSuccess, isPending, isConfirmed, fetcher.data]);
+
   return <div className="h-full flex flex-col items-center justify-start w-full px-2">
     <div className="flex flex-col flex-1 w-full items-center overflow-auto">
       <div className="flex flex-col grow gap-4 max-w-md w-md items-center flex-1">
         <p>You are about to create an airdrop <b>{airdropData.name}</b> on <b>{airdropData.chainName}</b>.</p>
-        <div className="card card-xs bg-base-300">
+        <div className="card bg-base-300 w-full max-w-full">
           <div className="card-body">
-            <table className="table table-xs wrap-anywhere">
-              <tbody>
-                <tr>
-                  <td colSpan={2}>
-                    <p className="w-full text-center text-sm mb-2 font-bold opacity-60">Airdrop Details</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Name</td>
-                  <td>{airdropData.name}</td>
-                </tr>
-                <tr>
-                  <td>Merkle Root</td>
-                  <td>{csvResult.tree.root}</td>
-                </tr>
-                <tr>
-                  <td>Deployed at address</td>
-                  <td>{receipt?.contractAddress || "waiting for deployment..."}</td>
-                </tr>
-                <tr>
-                  <td>Deployment tx</td>
-                  <td>{txHash || "waiting for deployment..."}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="card-title">Airdrop Details</div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-500">Name</label>
+              <div className="">
+                {airdropData.name}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-500">Merkle Root</label>
+              <div className="wrap-anywhere">
+                {csvResult.tree.root}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-500">Deployment status</label>
+              <div className="wrap-anywhere">
+                <div className="flex flex-col items-center">
+                  <div className="flex flex-row items-center justify-start w-full text-xs">
+                    {deploymentStatus.message}
+                  </div>
+                  {deploymentStatus.progress > 0
+                    ? <progress value={deploymentStatus.progress} max="100" className="progress progress-primary w-full max-w-full" />
+                    : <div className="h-2 w-full" />
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2">
+              <a
+                className="btn btn-outline btn-sm"
+                href={dataUri}
+                download={downloadFileName}
+              >
+                Download Tree Data
+              </a>
+            </div>
+            
           </div>
+        </div>
+        <div className="text-xl font-bold">
+          Airdropped token information
         </div>
         <TokenMetadataDisplay
           tokenData={airdropData.tokenData}
           chainName={airdropData.chainName}
           tokenAddress={airdropData.tokenAddress}
         />
-        <div role="alert" className="alert alert-info">
-          <div className="flex flex-col items-start gap-2 col-span-2">
-            <div className="font-bold w-full text-center">Status</div>
-            <div className="flex flex-row items-center gap-2">
-              {isSuccess ? <FaRegCircleCheck /> : isPending ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
-              <span>Sign Transaction</span>
+        {error && (
+          <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
+            <input type="checkbox" />
+            <div className="collapse-title font-semibold">
+              Error
             </div>
-            <div className="flex flex-row items-center gap-2">
-              {isConfirmed ? <FaRegCircleCheck /> : isConfirming ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
-              <span>Wait for deployment</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              {fetcher.data ? <FaRegCircleCheck /> : fetcher.state !== "idle" ? <PiSpinnerBold className="animate-spin" /> : <FaRegCircle />}
-              <span>Save in database</span>
+            <div className="collapse-content text-sm">
+              <div className="max-w-full wrap-break-word">
+                {error}
+              </div>
             </div>
           </div>
-        </div>
-        {error && <div className="alert alert-error rounded-lg w-full p-3 wrap-anywhere">{error}</div>}
+        )}
       </div>
     </div>
-    <div className="flex flex-col items-center gap-2 mt-auto mb-2">
+    <div className="flex flex-col items-center gap-2 pt-4 mt-auto mb-2">
       <div className="flex flex-row gap-2">
         {!inProgress && <>
           <button

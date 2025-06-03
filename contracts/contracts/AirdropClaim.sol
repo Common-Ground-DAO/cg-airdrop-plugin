@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@lukso/lsp-smart-contracts/lsp7-contracts/contracts/LSP7DigitalAsset.sol";
+import "@lukso/lsp7-contracts/contracts/ILSP7DigitalAsset.sol";
 import {
   _INTERFACEID_LSP7,
   _INTERFACEID_LSP7_V0_12_0,
@@ -53,35 +53,32 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
         if (isERC165) {
             // Token supports ERC165, you can now check for other interfaces
             // e.g., IERC20.interfaceId
+            isLSP7 =
+                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7) ||
+                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_12_0) ||
+                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_14_0);
         } else {
             // Token does not support ERC165, proceed with alternative verification
-        }
-
-        // Heuristic check if the token does support ERC20
-        uint256 codeSize;
-        assembly {
-            codeSize := extcodesize(token)
-        }
-
-        if (codeSize > 0) {
-            bool hasTotalSupply;
-            (hasTotalSupply, ) = token.staticcall(abi.encodeWithSignature("totalSupply()"));
-
-            bool hasBalanceOf;
-            (hasBalanceOf, ) = token.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
-
-            if (hasTotalSupply && hasBalanceOf) {
-                // The contract likely has these ERC20 functions.
-                // You can proceed with caution.
-            } else {
-                // The contract is missing essential ERC20 functions.
-                revert("Not a compliant ERC20 token");
+            // Heuristic check if the token does support ERC20
+            uint256 codeSize;
+            assembly {
+                codeSize := extcodesize(_token)
             }
-        } else {
-            revert("Address is not a contract");
+
+            if (codeSize > 0) {
+                bool hasTotalSupply;
+                (hasTotalSupply, ) = token.staticcall(abi.encodeWithSignature("totalSupply()"));
+
+                bool hasBalanceOf;
+                (hasBalanceOf, ) = token.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
+
+                if (!hasTotalSupply || !hasBalanceOf) {
+                    revert("Not a compliant ERC20 token");
+                }
+            } else {
+                revert("Address is not a contract");
+            }
         }
-
-
     }
 
     /**
@@ -89,7 +86,7 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
      * @param amount The amount of tokens to claim
      * @param merkleProof The merkle proof verifying the claim
      */
-    function claim(uint256 amount, bytes32[] calldata merkleProof) external nonReentrant {
+    function claim(uint256 amount, bytes32[] calldata merkleProof, bool forceLSP7Transfer) external nonReentrant {
         // Ensure address has not already claimed
         require(!hasClaimed[msg.sender], "Airdrop: Already claimed");
 
@@ -102,7 +99,11 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
         totalClaimed += amount;
 
         // Transfer the tokens
-        token.safeTransfer(msg.sender, amount);
+        if (isLSP7) {
+            ILSP7DigitalAsset(token).transfer(address(this), msg.sender, amount, forceLSP7Transfer, "");
+        } else {
+            IERC20(token).safeTransfer(msg.sender, amount);
+        }
 
         // Emit claim event
         emit AirdropClaimed(msg.sender, amount);
