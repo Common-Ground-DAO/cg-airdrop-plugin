@@ -5,12 +5,12 @@ import { IoArrowBack } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
-import { formatUnits } from "viem";
+import { useAccount, useReadContract, useWriteContract, useTransactionReceipt, useTransactionConfirmations } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
-import { useErc20Abi } from "~/hooks/contracts";
+import { useErc20Abi, useLsp7Abi } from "~/hooks/contracts";
 
 export default function AirdropDetailView({
   airdrop,
@@ -29,6 +29,23 @@ export default function AirdropDetailView({
   const [fundsToAdd, _setFundsToAdd] = useState<string | undefined>(undefined);
   const airdropAbi = useAirdropAbi();
   const erc20Abi = useErc20Abi();
+  const lsp7Abi = useLsp7Abi();
+  const {
+    writeContract,
+    isPending: isPendingWriteContract,
+    isSuccess: isSuccessWriteContract,
+    isError: isErrorWriteContract,
+    error: writeContractError,
+    data: writeContractData,
+  } = useWriteContract();
+
+  const { data: transactionReceipt, isLoading: isLoadingTransactionReceipt, error: transactionReceiptError } = useTransactionReceipt({
+    hash: writeContractData as `0x${string}`,
+  });
+
+  // const { data: transactionConfirmations, isLoading: isLoadingTransactionConfirmations, error: transactionConfirmationsError } = useTransactionConfirmations({
+  //   hash: writeContractData as `0x${string}`,
+  // });
 
   const setFundsToAdd = useCallback((value: string) => {
     if (/^\d*\.?\d*$/.test(value)) {
@@ -93,19 +110,40 @@ export default function AirdropDetailView({
     return (airdropItemsFetcher.data?.airdropItems || []).reduce<bigint>((acc, item) => acc + BigInt(item.amount), 0n);
   }, [airdropItemsFetcher.data?.airdropItems]);
 
-  const { data: totalClaimedAmount, isLoading: isLoadingTotalClaimedAmount, error: totalClaimedAmountError } = useReadContract({
+  const { data: totalClaimedAmount, isLoading: isLoadingTotalClaimedAmount, error: totalClaimedAmountError, refetch: refetchTotalClaimedAmount } = useReadContract({
     address: airdrop.airdropAddress as `0x${string}`,
     abi: airdropAbi || [],
     functionName: "totalClaimed",
     args: [],
   });
 
-  const { data: airdropContractBalance, isLoading: isLoadingAirdropContractBalance, error: airdropContractBalanceError } = useReadContract({
+  const { data: airdropContractBalance, isLoading: isLoadingAirdropContractBalance, error: airdropContractBalanceError, refetch: refetchAirdropContractBalance } = useReadContract({
     address: airdrop.tokenAddress as `0x${string}`,
     abi: erc20Abi || [],
     functionName: "balanceOf",
-    args: [airdrop.tokenAddress as `0x${string}`],
+    args: [airdrop.airdropAddress as `0x${string}`],
   });
+
+  const { data: hasClaimed, isLoading: isLoadingHasClaimed, error: hasClaimedError, refetch: refetchHasClaimed } = useReadContract({
+    address: airdrop.airdropAddress as `0x${string}`,
+    abi: airdropAbi || [],
+    functionName: "hasClaimed",
+    args: [address!],
+  });
+
+  const [transferAbi, transferArgs] =  useMemo(() => {
+    let abi: typeof erc20Abi | typeof lsp7Abi | undefined;
+    let args: any[] = [];
+    if (tokenData.decimals === undefined || fundsToAdd === undefined) return [abi, args];
+    if (tokenData.type === "erc20") {
+      abi = erc20Abi;
+      args = [airdrop.airdropAddress as `0x${string}`, parseUnits(fundsToAdd, tokenData.decimals)];
+    } else if (tokenData.type === "lsp7") {
+      abi = lsp7Abi;
+      args = [address, airdrop.airdropAddress as `0x${string}`, parseUnits(fundsToAdd, tokenData.decimals), true, ""];
+    }
+    return [abi, args];
+  }, [tokenData.type, erc20Abi, lsp7Abi, airdrop.airdropAddress, fundsToAdd]);
 
   const missingFunds = useMemo(() => {
     if (airdropContractBalance === undefined || totalClaimedAmount === undefined || tokenData.decimals === undefined) return 0n;
@@ -120,16 +158,55 @@ export default function AirdropDetailView({
     }
   }, [fundsToAdd, missingFunds]);
 
-  const claimAirdrop = useCallback((itemAddress: string) => {
+  useEffect(() => {
+    // Todo: wait for confirmations instead?
+    if (!!transactionReceipt) {
+      refetchTotalClaimedAmount();
+      refetchAirdropContractBalance();
+      refetchHasClaimed();
+    }
+  }, [transactionReceipt, refetchTotalClaimedAmount, refetchAirdropContractBalance, refetchHasClaimed]);
+
+  const claimAirdrop = useCallback((itemAddress: string, amountStr: `${number}`) => {
     if (!merkleTree) return;
+    let amount = 0n;
+    try {
+      amount = BigInt(amountStr);
+    }
+    catch (e) {
+      console.error("Error parsing amount: ", e);
+      return;
+    }
     const proofIndex = addressToProofIndexMap.get(itemAddress.toLowerCase());
     if (proofIndex !== undefined) {
       const proof = merkleTree.getProof(proofIndex);
-      console.log("Proof: ", proof);
+      console.log("Claiming amount: ", amount, " with proof: ", proof);
+      writeContract({
+        address: airdrop.airdropAddress as `0x${string}`,
+        abi: airdropAbi || [],
+        functionName: "claim",
+        args: [amount, proof as `0x${string}`[], true],
+      });
     }
-  }, [merkleTree, addressToProofIndexMap]);
+  }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract]);
+
+  const fundAirdropContract = useCallback(() => {
+    if (!transferAbi || airdrop.tokenAddress === undefined) return;
+    writeContract({
+      address: airdrop.tokenAddress as `0x${string}`,
+      abi: transferAbi,
+      functionName: "transfer",
+      args: transferArgs as any,
+    });
+  }, [writeContract, transferAbi, transferArgs, airdrop.tokenAddress, fundsToAdd, tokenData.decimals]);
 
   const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
+
+  const errors = [
+    writeContractError,
+    totalClaimedAmountError,
+    airdropContractBalanceError, 
+  ].filter(Boolean);
 
   return (
     <div className="card bg-base-100 overflow-hidden p-4 flex flex-col flex-1 mr-4 shadow-lg">
@@ -141,8 +218,14 @@ export default function AirdropDetailView({
           <h1 className="text-3xl font-bold">{airdrop.name}</h1>
         </div>
         <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
-          <div className="flex flex-col max-w-full justify-start gap-4 p-4">
-            <div className="card bg-base-300 shadow-lg">
+          <div className="flex flex-col max-w-full justify-start gap-4">
+            <TokenMetadataDisplay
+              tokenData={tokenData}
+              chainName={airdrop.chainName}
+              tokenAddress={airdrop.tokenAddress as `0x${string}`}
+              small={true}
+            />
+            <div className="card card-sm bg-base-300 shadow-lg">
               <div className="card-body">
                 <table className="table w-fit">
                   <tbody>
@@ -167,7 +250,7 @@ export default function AirdropDetailView({
                         <td colSpan={2} className="text-center">
                           <div className="join">
                             <input type="text" className="input input-bordered join-item" value={fundsToAdd || ""} onChange={(e) => setFundsToAdd(e.target.value)} />
-                            <button className="btn btn-primary join-item">
+                            <button className="btn btn-primary join-item" onClick={fundAirdropContract}>
                               Add funds
                             </button>
                           </div>
@@ -178,28 +261,25 @@ export default function AirdropDetailView({
                 </table>
               </div>
             </div>
-            
 
-            {(!!totalClaimedAmountError || !!airdropContractBalanceError) && <div className="alert alert-error">
-              <span className="text-sm">Error: {totalClaimedAmountError?.message || airdropContractBalanceError?.message}</span>
-            </div>}
-            {isLoadingTotalClaimedAmount || isLoadingAirdropContractBalance && <div className="flex flex-row gap-2">
-              <span className="text-sm">Loading...</span>
-            </div>}
-
-            <TokenMetadataDisplay
-              tokenData={tokenData}
-              chainName={airdrop.chainName}
-              tokenAddress={airdrop.tokenAddress as `0x${string}`}
-              small={true}
-            />
+            {errors.map((error) => <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
+              <input type="checkbox" />
+              <div className="collapse-title font-semibold">
+                Error
+              </div>
+              <div className="collapse-content text-sm">
+                <div className="max-w-full wrap-break-word">
+                  {error?.message || "Unknown error"}
+                </div>
+              </div>
+            </div>)}
           </div>
           {hasItems && tokenData.decimals !== undefined && <table className="table w-fit">
             <tbody>
               <tr>
                 <th className="p-2 border-b">Address</th>
                 <th className="p-2 border-b">Amount</th>
-                <th className="p-2 border-b">{ownAirdropItems.length > 0 ? "Claim" : ""}</th>
+                <th className="p-2 border-b"></th>
               </tr>
               {ownAirdropItems.map((item, index) => (
                 <tr key={item.address}>
@@ -212,9 +292,10 @@ export default function AirdropDetailView({
                   <td className={`${index === ownAirdropItems.length - 1 && otherAirdropItems.length === 0 ? "" : "border-b"}`}>
                     <div className="flex flex-col items-center">
                       <button
-                        className="btn btn-xs btn-primary"
-                        onClick={() => claimAirdrop(item.address)}
-                      >Claim</button>
+                        className={`btn btn-xs ${hasClaimed ? "btn-success" : "btn-primary"}`}
+                        onClick={() => !hasClaimed && claimAirdrop(item.address, item.amount as `${number}`)}
+                        disabled={isLoadingHasClaimed}
+                      >{hasClaimed ? "Claimed" : "Claim"}</button>
                     </div>
                   </td>
                 </tr>

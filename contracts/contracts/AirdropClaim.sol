@@ -86,7 +86,7 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
      * @param amount The amount of tokens to claim
      * @param merkleProof The merkle proof verifying the claim
      */
-    function claim(uint256 amount, bytes32[] calldata merkleProof, bool forceLSP7Transfer) external nonReentrant {
+    function claim(uint256 amount, bytes32[] memory merkleProof, bool forceLSP7Transfer) external nonReentrant {
         // Ensure address has not already claimed
         require(!hasClaimed[msg.sender], "Airdrop: Already claimed");
 

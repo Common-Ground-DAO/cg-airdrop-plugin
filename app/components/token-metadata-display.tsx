@@ -19,12 +19,14 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
 
   if (tokenData.isFetching) {
     return (
-      <div className="p-4 space-y-2 w-full max-w-full mb-4">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="card bg-base-300 shadow-lg w-full max-w-full mb-4">
+        <div className="card-body">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+          <div className="text-sm text-gray-500">Loading token metadata...</div>
         </div>
-        <div className="text-sm text-gray-500">Loading token metadata...</div>
       </div>
     );
   }
