@@ -117,10 +117,12 @@ export default function AirdropDetailView({
               <div className="flex flex-row gap-2">
                 <span className="text-sm"><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></span>
               </div>
-              {totalClaimedAmount !== undefined && <div className="flex flex-row gap-2">
-                <span className="text-sm"><FormatUnits className="text-right" value={totalClaimedAmount.toString()} decimals={tokenData.decimals || 0} /></span>
-                <span className="text-sm">Claimed</span>
-              </div>}
+              {totalClaimedAmount !== undefined && <>
+                <label className="text-sm">Total claimed amount</label>
+                <div className="flex flex-row gap-2">
+                  <span className="text-sm"><FormatUnits className="text-right" value={totalClaimedAmount.toString()} decimals={tokenData.decimals || 0} /></span>
+                </div>
+              </>}
               {totalClaimedAmountError && <div className="flex flex-row gap-2">
                 <span className="text-sm">Error: {totalClaimedAmountError.message}</span>
               </div>}
