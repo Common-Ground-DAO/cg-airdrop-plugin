@@ -51,10 +51,9 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
     return airdrops.find(a => a.id === airdropId);
   }, [airdrops, airdropId]);
 
-  return (
-    <div className="flex flex-col h-full max-h-[calc(100%-1rem)]">
-      {!airdrop && <AirdropListView airdrops={airdrops} />}
-      {!!airdrop && <AirdropDetailView airdrop={airdrop} />}
-    </div>
-  );
+  if (airdrop) {
+    return <AirdropDetailView airdrop={airdrop} />
+  }
+
+  return <AirdropListView airdrops={airdrops} />;
 }

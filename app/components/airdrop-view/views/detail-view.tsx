@@ -209,14 +209,14 @@ export default function AirdropDetailView({
   ].filter(Boolean);
 
   return (
-    <div className="card bg-base-100 overflow-hidden p-4 flex flex-col flex-1 mr-4 shadow-lg">
+    <>
       <div className="flex flex-col gap-4 overflow-hidden">
-        <div className="flex flex-row gap-1 items-center">
-          <NavLink to="/" className="btn btn-ghost btn-circle">
+        <nav className="flex flex-row gap-1 items-center">
+          <NavLink to="/airdrops" className="btn btn-ghost btn-circle">
             <IoArrowBack className="w-4 h-4" />
           </NavLink>
-          <h1 className="text-3xl font-bold">{airdrop.name}</h1>
-        </div>
+          <div className="text-xl font-bold">{airdrop.name}</div>
+        </nav>
         <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
@@ -340,6 +340,6 @@ export default function AirdropDetailView({
           </div>
         </div>
       </dialog>}
-    </div>
+    </>
   );
 }

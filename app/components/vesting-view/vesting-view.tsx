@@ -6,8 +6,6 @@ export default function VestingView({ vestingId }: { vestingId?: number }) {
   const { communityInfo } = useCgData();
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100%-1rem)]">
-      <VestingListView vestingId={vestingId} />
-    </div>
+    <VestingListView vestingId={vestingId} />
   );
 }

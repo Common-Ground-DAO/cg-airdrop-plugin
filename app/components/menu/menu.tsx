@@ -12,7 +12,7 @@ export default function Menu() {
     const { isAdmin } = useCgData();
     const location = useLocation();
 
-    return <div className="flex flex-col gap-2">
+    return <nav className="flex flex-col gap-2">
         <ul className="menu bg-base-100 p-2 rounded-box self-start gap-1 ml-4 w-[calc(100%-1rem)] shadow-lg">
         <li>
                 <NavLink
@@ -46,7 +46,7 @@ export default function Menu() {
             <li><div className="divider mt-2 mb-1">Admin</div></li>
             <li>
                 <NavLink
-                    to="/create-airdrop"
+                    to="/airdrops/create"
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <RiAddLargeFill />
@@ -55,7 +55,7 @@ export default function Menu() {
             </li>
             <li>
                 <NavLink
-                    to="/create-vesting"
+                    to="/vestings/create"
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <RiAddLargeFill />
@@ -63,5 +63,5 @@ export default function Menu() {
                 </NavLink>
             </li>
         </ul>}
-    </div>;
+    </nav>;
 }

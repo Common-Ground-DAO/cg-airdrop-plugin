@@ -8,7 +8,11 @@ export default function Layout() {
       <Header />
       <div className="grid grid-cols-[225px_calc(100vw-241px)] grid-rows-[100%] gap-4 overflow-hidden">
         <Menu />
-        <Outlet />
+        <div className="card bg-base-100 shadow-lg h-[calc(100%-1rem)] max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] mr-4 mb-4">
+          <div className="flex flex-col flex-1 h-full max-h-full">
+            <Outlet />
+          </div>
+        </div>
       </div>
     </div>
   );
