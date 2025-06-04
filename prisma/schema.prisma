@@ -15,7 +15,7 @@ datasource db {
 }
 
 model Airdrop {
-  id               Int @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   name             String
   creatorId        String
   communityId      String
@@ -47,4 +47,21 @@ model MerkleTree {
   data             Json
 
   @@index(fields: [airdropId])
+}
+
+model Vesting {
+  address          String
+  communityId      String
+  tokenAddress     String
+  contractAddress  String
+  chainId          Int
+  createdAt        DateTime       @default(now())
+  startTime        DateTime
+  endTime          DateTime
+
+  @@id([contractAddress, chainId])
+  @@index(fields: [address])
+  @@index(fields: [communityId])
+  @@index(fields: [startTime])
+  @@index(fields: [endTime])
 }

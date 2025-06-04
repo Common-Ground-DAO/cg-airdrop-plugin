@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import type { Route } from "./+types/_index";
+import type { Route } from "./+types/airdrops";
 import AirdropView from "~/components/airdrop-view/airdrop-view";
 
 export function meta({}: Route.MetaArgs) {
@@ -9,7 +9,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Index() {
+export default function Airdrops() {
   const { airdropId } = useParams();
   let airdropIdNumber: number | undefined;
   try {

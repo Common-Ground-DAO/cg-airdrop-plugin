@@ -46,9 +46,7 @@ contract CgVesting is VestingWallet {
     * @dev Sets the beneficiary (owner), the start timestamp and the vesting duration (in seconds) of the vesting
     * wallet.
     */
-  constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) payable VestingWallet(beneficiary, startTimestamp, durationSeconds) {
-
-  }
+  constructor(address beneficiary, uint64 startTimestamp, uint64 durationSeconds) payable VestingWallet(beneficiary, startTimestamp, durationSeconds) {}
 
   /**
     * @dev Amount of token already released

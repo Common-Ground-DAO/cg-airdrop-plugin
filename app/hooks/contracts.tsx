@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import type { erc20Abi } from "viem";
-import type { AirdropClaim__factory, ERC20__factory } from "~/contracts";
+import type { AirdropClaim__factory, CgVesting__factory } from "~/contracts";
 import type { lsp7DigitalAssetAbi } from "@lukso/lsp7-contracts/abi";
 import type { lsp4DigitalAssetMetadataAbi } from "@lukso/lsp4-contracts/abi";
-let _airdropFactory: typeof AirdropClaim__factory | null = null;
 
 // Airdrop
-
+let _airdropFactory: typeof AirdropClaim__factory | null = null;
 export function useAirdropContractFactory() {
     const [factory, setFactory] = useState<typeof AirdropClaim__factory | null>(() => _airdropFactory);
     
@@ -14,7 +13,7 @@ export function useAirdropContractFactory() {
         let mounted = true;
         if (factory) return;
         (async () => {
-            const { AirdropClaim__factory } = await import("~/contracts/factories/contracts/AirdropClaim__factory");
+            const { AirdropClaim__factory } = await import("~/contracts");
             _airdropFactory = AirdropClaim__factory;
             if (mounted) {
                 setFactory(() => AirdropClaim__factory);
@@ -41,8 +40,43 @@ export function useAirdropAbi() {
     return abi;
 }
 
-// ERC20
+// Vesting
+let _vestingFactory: typeof CgVesting__factory | null = null;
+export function useVestingContractFactory() {
+    const [factory, setFactory] = useState<typeof CgVesting__factory | null>(() => _vestingFactory);
+    
+    useEffect(() => {
+        let mounted = true;
+        if (factory) return;
+        (async () => {
+            const { CgVesting__factory } = await import("~/contracts");
+            _vestingFactory = CgVesting__factory;
+            if (mounted) {
+                setFactory(() => CgVesting__factory);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
+    return factory;
+}
+
+export function useVestingAbi() {
+    const vestingContractFactory = useVestingContractFactory();
+    const [abi, setAbi] = useState<typeof CgVesting__factory["abi"] | null>(vestingContractFactory?.abi || null);
+
+    useEffect(() => {
+        if (!abi && vestingContractFactory) {
+            setAbi(vestingContractFactory.abi);
+        }
+    }, [abi, vestingContractFactory]);
+
+    return abi;
+}
+
+// ERC20
 let _erc20Abi: typeof erc20Abi | null = null;
 export function useErc20Abi() {
     const [abi, setAbi] = useState<typeof erc20Abi | null>(_erc20Abi);

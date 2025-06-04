@@ -3,6 +3,8 @@ import type { CsvUploadResult } from "../csv-upload-button/csv-upload-button";
 import { useAccount } from "wagmi";
 import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from "./steps";
 import { useTokenData, type TokenData } from "~/hooks/token-data";
+import { useNavigate } from "react-router";
+import { IoArrowBack } from "react-icons/io5";
 
 export interface AirdropData {
   name?: string;
@@ -19,6 +21,7 @@ export default function AirdropCreate() {
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
   const { chain } = useAccount();
   const [airdropData, setAirdropData] = useState<AirdropData>({ chainId: chain?.id, chainName: chain?.name });
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (chain?.id !== airdropData.chainId || chain?.name !== airdropData.chainName) {
@@ -75,6 +78,9 @@ export default function AirdropCreate() {
             csvResult={csvResult!}
             setStep={setStep}
           />}
+        </div>
+        <div className="absolute left-4 top-4">
+          <button className="btn btn-ghost btn-circle" onClick={() => navigate("/")}><IoArrowBack className="w-4 h-4" /></button>
         </div>
       </div>
     </div>
