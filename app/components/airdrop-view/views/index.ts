@@ -1,4 +1,4 @@
-import AirdropListView from "./list-view";
-import AirdropDetailView from "./detail-view";
+import AirdropListView from "./airdrop-list-view";
+import AirdropDetailView from "./airdrop-detail-view";
 
 export { AirdropListView, AirdropDetailView };

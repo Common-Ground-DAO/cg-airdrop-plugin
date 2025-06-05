@@ -1,32 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useFetcher, useSearchParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFetcher, useSearchParams, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import type { Airdrop } from "generated/prisma";
 import { AirdropListView, AirdropDetailView } from "./views";
 
 export default function AirdropView({ airdropId }: { airdropId?: number }) {
-  const { communityInfo } = useCgData();
+  const { communityInfo, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
   const airdropFetcher = useFetcher<Airdrop[]>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const deletedIdsSet = useRef<Set<number>>(new Set());
+  const [deletedIdsSet, setDeletedIdsSet] = useState<Set<number>>(new Set());
+  const submit = useSubmit();
+  const [deleteIsSubmitting, setDeleteIsSubmitting] = useState(false);
 
   const airdrops = useMemo(() => {
     if (!airdropFetcher.data) return undefined;
-    const deleted = searchParams.get("deleted");
-    if (deleted) {
-      searchParams.delete("deleted");
-      setSearchParams(searchParams);
-      if (/^\d+$/.test(deleted)) {
-        const deletedId = parseInt(deleted);
-        deletedIdsSet.current.add(deletedId);
-      }
-      else {
-        console.warn("Invalid deleted ID: " + deleted);
-      }
-    }
-    return airdropFetcher.data.filter(a => !deletedIdsSet.current.has(a.id));
-  }, [airdropFetcher.data, searchParams, deletedIdsSet]);
+    return airdropFetcher.data.filter(a => !deletedIdsSet.has(a.id));
+  }, [airdropFetcher.data, deletedIdsSet]);
 
   useEffect(() => {
     if (!communityInfo) return;
@@ -51,8 +40,30 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
     return airdrops.find(a => a.id === airdropId);
   }, [airdrops, airdropId]);
 
+  const deleteAirdrop = useCallback(async (airdropId: number) => {
+    const newDeletedIdsSet = new Set(deletedIdsSet);
+    try {
+      setDeleteIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("airdropId", airdropId.toString());
+      formData.append("communityInfoRaw", __communityInfoRawResponse || "");
+      formData.append("userInfoRaw", __userInfoRawResponse || "");
+      newDeletedIdsSet.add(airdropId);
+      setDeletedIdsSet(newDeletedIdsSet);
+      await submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });      
+    }
+    catch (error) {
+      newDeletedIdsSet.delete(airdropId);
+      setDeletedIdsSet(newDeletedIdsSet);
+      console.error("Error deleting airdrop: " + error);
+    }
+    finally {
+      setDeleteIsSubmitting(false);
+    }
+  }, [submit, __userInfoRawResponse, __communityInfoRawResponse, deletedIdsSet]);
+
   if (airdrop) {
-    return <AirdropDetailView airdrop={airdrop} />
+    return <AirdropDetailView airdrop={airdrop} deleteAirdrop={deleteAirdrop} deleteIsSubmitting={deleteIsSubmitting} />;
   }
 
   return <AirdropListView airdrops={airdrops} />;

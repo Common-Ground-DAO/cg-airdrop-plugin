@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useFetcher, useSubmit } from "react-router";
+import { NavLink, useFetcher, useNavigate } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
-import { useAccount, useReadContract, useWriteContract, useTransactionReceipt, useTransactionConfirmations } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useTransactionReceipt } from "wagmi";
 import { formatUnits, parseUnits } from "viem";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
@@ -14,19 +14,22 @@ import { useErc20Abi, useLsp7Abi } from "~/hooks/contracts";
 
 export default function AirdropDetailView({
   airdrop,
+  deleteAirdrop,
+  deleteIsSubmitting,
 }: {
   airdrop: Airdrop,
+  deleteAirdrop: (airdropId: number) => Promise<void>,
+  deleteIsSubmitting: boolean,
 }) {
   const airdropItemsFetcher = useFetcher<{
     airdropItems: AirdropItem[];
     merkleTree: MerkleTree;
   }>();
-  const submit = useSubmit();
-  const { isAdmin, __userInfoRawResponse, __communityInfoRawResponse } = useCgData();
+  const { isAdmin } = useCgData();
   const tokenData = useTokenData(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
   const { address } = useAccount();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fundsToAdd, _setFundsToAdd] = useState<string | undefined>(undefined);
+  const navigate = useNavigate();
   const airdropAbi = useAirdropAbi();
   const erc20Abi = useErc20Abi();
   const lsp7Abi = useLsp7Abi();
@@ -57,20 +60,6 @@ export default function AirdropDetailView({
     if (airdrop?.id === undefined) return;
     airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/details` });
   }, [airdrop?.id]);
-
-  const deleteAirdrop = useCallback(async () => {
-    try {
-      setIsSubmitting(true);
-      const formData = new FormData();
-      formData.append("airdropId", airdrop.id.toString());
-      formData.append("communityInfoRaw", __communityInfoRawResponse || "");
-      formData.append("userInfoRaw", __userInfoRawResponse || "");
-      await submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
-    }
-    finally {
-      setIsSubmitting(false);
-    }
-  }, [airdrop, submit, __userInfoRawResponse, __communityInfoRawResponse]);
 
   const { ownAirdropItems, otherAirdropItems } = useMemo(() => {
     const lowerCaseAddress = address?.toLowerCase();
@@ -334,8 +323,8 @@ export default function AirdropDetailView({
             </form>
             <button
               className="btn btn-error"
-              onClick={deleteAirdrop}
-              disabled={isSubmitting}
+              onClick={() => deleteAirdrop(airdrop.id).then(() => navigate("/airdrops"))}
+              disabled={deleteIsSubmitting}
             >Delete</button>
           </div>
         </div>

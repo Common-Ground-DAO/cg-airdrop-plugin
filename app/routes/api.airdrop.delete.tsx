@@ -1,4 +1,3 @@
-import { redirect } from 'react-router';
 import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/cgDataUtils';
 import { prisma } from '~/lib/db';
 
@@ -33,6 +32,4 @@ export async function action({ request }: { request: Request }) {
   if (!deletedAirdrop) {
     throw new Error("Airdrop not found");
   }
-
-  return redirect(`/?deleted=${airdropId}`);
 } 
