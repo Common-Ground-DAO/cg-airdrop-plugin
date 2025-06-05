@@ -5,8 +5,6 @@ import { useAirdropContractFactory } from "~/hooks";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
-import { FaRegCircle, FaRegCircleCheck } from "react-icons/fa6";
-import { PiSpinnerBold } from "react-icons/pi";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
 
 interface StepThreeProps {

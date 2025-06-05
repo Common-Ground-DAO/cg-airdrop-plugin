@@ -54,7 +54,7 @@ export default function AirdropCreate() {
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
       <h1 className="text-xl font-bold p-4 pb-0">Create Airdrop</h1>
-      <ul className="steps w-md mb-4">
+      <ul className="steps w-md mb-4 mx-auto">
         <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Airdrop Details</li>
         <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload CSV</li>
         <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy</li>
@@ -77,9 +77,6 @@ export default function AirdropCreate() {
           csvResult={csvResult!}
           setStep={setStep}
         />}
-      </div>
-      <div className="absolute left-4 top-4">
-        <button className="btn btn-ghost btn-circle" onClick={() => navigate("/")}><IoArrowBack className="w-4 h-4" /></button>
       </div>
     </div>
   );

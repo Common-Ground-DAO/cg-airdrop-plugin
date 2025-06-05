@@ -252,6 +252,18 @@ export default function AirdropDetailView({
                 <table className="table w-fit">
                   <tbody>
                     <tr>
+                      <td colSpan={2} className="text-left">
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <h2 className="font-semibold">Progress: {(Number(totalClaimedAmount) / Number(totalAirdropAmount) * 100).toFixed(2)}%</h2>
+                            <div className="w-full">
+                              <progress className="progress progress-primary w-full" value={Number(totalClaimedAmount) / Number(totalAirdropAmount)} max={1}></progress>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
                       <td>Total airdrop amount</td>
                       <td><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></td>
                     </tr>

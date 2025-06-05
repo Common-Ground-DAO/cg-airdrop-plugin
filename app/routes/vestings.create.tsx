@@ -1,12 +1,12 @@
-import AirdropCreate from "../components/airdrop-create/airdrop-create";
+import VestingCreate from "../components/vesting-create/vesting-create";
 
 export function meta() {
   return [
-    { title: "Create new Airdrop" },
-    { name: "description", content: "Create a new airdrop merkle tree and deploy it to the blockchain" },
+    { title: "Create new Vesting" },
+    { name: "description", content: "Create a new vesting contract and deploy it to the blockchain" },
   ];
 }
 
-export default function CreateAirdrop() {
-  return <AirdropCreate />;
+export default function CreateVesting() {
+  return <VestingCreate />;
 } 

@@ -50,7 +50,7 @@ export default function Menu() {
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <RiAddLargeFill />
-                    New Airdrop
+                    Create Airdrop
                 </NavLink>
             </li>
             <li>
@@ -59,7 +59,7 @@ export default function Menu() {
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <RiAddLargeFill />
-                    New Vesting
+                    Create Vesting
                 </NavLink>
             </li>
         </ul>}

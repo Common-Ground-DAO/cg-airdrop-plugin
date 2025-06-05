@@ -51,6 +51,7 @@ model MerkleTree {
 
 model Vesting {
   address          String
+  creatorId        String
   communityId      String
   tokenAddress     String
   contractAddress  String
