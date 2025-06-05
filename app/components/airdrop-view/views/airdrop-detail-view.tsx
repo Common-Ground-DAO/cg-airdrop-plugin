@@ -192,10 +192,19 @@ export default function AirdropDetailView({
   const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
 
   const errors = [
-    writeContractError,
     totalClaimedAmountError,
     airdropContractBalanceError, 
   ].filter(Boolean);
+
+  const isLoading =
+    isLoadingTotalClaimedAmount ||
+    isLoadingAirdropContractBalance ||
+    isLoadingHasClaimed ||
+    totalClaimedAmount === undefined ||
+    airdropContractBalance === undefined ||
+    airdropItemsFetcher.data === undefined ||
+    tokenData.isFetching ||
+    !airdropAbi || !erc20Abi || !lsp7Abi;
 
   return (
     <>
@@ -212,7 +221,25 @@ export default function AirdropDetailView({
             ><IoTrashOutline /><span>Delete Airdrop</span></button>
           </div>}
         </nav>
-        <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {isLoading && !errors.length && (
+          <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+            <div className="flex flex-col max-w-full justify-start gap-4 mt-8">
+              <div className="loading loading-spinner loading-lg"></div>
+            </div>
+          </div>
+        )}
+        {errors.map((error) => <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
+          <input type="checkbox" />
+          <div className="collapse-title font-semibold">
+            Error
+          </div>
+          <div className="collapse-content text-sm">
+            <div className="max-w-full wrap-break-word">
+              {error?.message || "Unknown error"}
+            </div>
+          </div>
+        </div>)}
+        {!isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
@@ -257,17 +284,17 @@ export default function AirdropDetailView({
               </div>
             </div>
 
-            {errors.map((error) => <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
+            {writeContractError && <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
               <input type="checkbox" />
               <div className="collapse-title font-semibold">
                 Error
               </div>
               <div className="collapse-content text-sm">
                 <div className="max-w-full wrap-break-word">
-                  {error?.message || "Unknown error"}
+                  {writeContractError.message || "Unknown error"}
                 </div>
               </div>
-            </div>)}
+            </div>}
           </div>
           {hasItems && tokenData.decimals !== undefined && <table className="table w-fit">
             <tbody>
@@ -311,7 +338,7 @@ export default function AirdropDetailView({
           {!airdropItemsFetcher.data ? <div className="grow">Loading items...</div> : tokenData.decimals === undefined ? <div className="grow">Loading contract data...</div> : null}
           {airdropItemsFetcher.data?.airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
           {tokenData.error && <div>Error: {tokenData.error.message}</div>}
-        </div>
+        </div>}
       </div>
       <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
