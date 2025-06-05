@@ -52,36 +52,34 @@ export default function AirdropCreate() {
   }, [tokenData]);
 
   return (
-    <div className="h-[calc(100%-1rem)] max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] mr-4 mb-4">
-      <div className="flex flex-col card bg-base-100 items-center h-full pt-4 pb-2 shadow-lg">
-        <h1 className="text-3xl font-bold mb-4">Create Airdrop</h1>
-        <ul className="steps w-md mb-4">
-          <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Airdrop Details</li>
-          <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload CSV</li>
-          <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy</li>
-        </ul>
-        <div className="flex-1 flex flex-col w-full overflow-hidden">
-          {step === 0 && <AirdropSetupStepOne
-            airdropData={airdropData}
-            setAirdropData={setAirdropData}
-            setStep={setStep}
-            validAddress={validAddress}
-          />}
-          {step === 1 && <AirdropSetupStepTwo
-            airdropData={airdropData}
-            csvResult={csvResult}
-            setCsvResult={setCsvResult}
-            setStep={setStep}
-          />}
-          {step === 2 && <AirdropSetupStepThree
-            airdropData={airdropData}
-            csvResult={csvResult!}
-            setStep={setStep}
-          />}
-        </div>
-        <div className="absolute left-4 top-4">
-          <button className="btn btn-ghost btn-circle" onClick={() => navigate("/")}><IoArrowBack className="w-4 h-4" /></button>
-        </div>
+    <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
+      <h1 className="text-xl font-bold p-4 pb-0">Create Airdrop</h1>
+      <ul className="steps w-md mb-4">
+        <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Airdrop Details</li>
+        <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload CSV</li>
+        <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Deploy</li>
+      </ul>
+      <div className="flex-1 flex flex-col w-full overflow-hidden">
+        {step === 0 && <AirdropSetupStepOne
+          airdropData={airdropData}
+          setAirdropData={setAirdropData}
+          setStep={setStep}
+          validAddress={validAddress}
+        />}
+        {step === 1 && <AirdropSetupStepTwo
+          airdropData={airdropData}
+          csvResult={csvResult}
+          setCsvResult={setCsvResult}
+          setStep={setStep}
+        />}
+        {step === 2 && <AirdropSetupStepThree
+          airdropData={airdropData}
+          csvResult={csvResult!}
+          setStep={setStep}
+        />}
+      </div>
+      <div className="absolute left-4 top-4">
+        <button className="btn btn-ghost btn-circle" onClick={() => navigate("/")}><IoArrowBack className="w-4 h-4" /></button>
       </div>
     </div>
   );

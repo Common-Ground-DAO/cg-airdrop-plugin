@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useFetcher, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
-import { IoArrowBack } from "react-icons/io5";
+import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
@@ -211,11 +211,17 @@ export default function AirdropDetailView({
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
-        <nav className="flex flex-row gap-1 items-center">
-          <NavLink to="/airdrops" className="btn btn-ghost btn-circle">
+        <nav className="flex flex-row gap-1 items-center m-4 mb-0">
+          <NavLink to="/airdrops" className="btn btn-ghost btn-circle btn-xs">
             <IoArrowBack className="w-4 h-4" />
           </NavLink>
           <div className="text-xl font-bold">{airdrop.name}</div>
+          {isAdmin && <div className="flex flex-row items-center justify-end flex-1 shrink-0">
+            <button
+              className="btn btn-error btn-xs gap-1"
+              onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
+            ><IoTrashOutline /><span>Delete Airdrop</span></button>
+          </div>}
         </nav>
         <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
@@ -318,13 +324,7 @@ export default function AirdropDetailView({
           {tokenData.error && <div>Error: {tokenData.error.message}</div>}
         </div>
       </div>
-      {isAdmin && <div className="flex flex-row gap-4 w-full items-center justify-center mt-auto pt-3">
-        <button
-          className="btn btn-error btn-sm"
-          onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
-        >Admin: Delete Airdrop</button>
-      </div>}
-      {isAdmin && <dialog id="delete-airdrop-modal" className="modal">
+      <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Are you sure you want to delete this airdrop?</h3>
           <p className="py-4">This action cannot be undone.</p>
@@ -339,7 +339,7 @@ export default function AirdropDetailView({
             >Delete</button>
           </div>
         </div>
-      </dialog>}
+      </dialog>
     </>
   );
 }

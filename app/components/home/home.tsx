@@ -1,7 +1,7 @@
 export default function Home() {
     return (
-        <div className="px-8 py-4">
-            <h1 className="text-3xl font-bold mb-6">Home</h1>
+        <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
+            <h1 className="text-xl font-bold p-4 pb-0">Home</h1>
         </div>
     );
 }
