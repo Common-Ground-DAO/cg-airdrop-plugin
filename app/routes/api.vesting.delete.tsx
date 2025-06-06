@@ -1,11 +1,10 @@
-import { redirect } from 'react-router';
 import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/cgDataUtils';
 import { prisma } from '~/lib/db';
 
 // API-only route - handles POST requests to create airdrops
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
-  const airdropId = formData.get("airdropId") as string;
+  const vestingId = formData.get("vestingId") as string;
   const communityInfoRaw = formData.get("communityInfoRaw") as string;
   const userInfoRaw = formData.get("userInfoRaw") as string;
 
@@ -19,20 +18,18 @@ export async function action({ request }: { request: Request }) {
   if (communityInfoTimestampAge > 120_000 || userInfoTimestampAge > 120_000) {
     throw new Error("The provided signed community or user data is too old, please try again.");
   }
-  const isAdmin = await isUserAdmin(communityInfo.result.data, userInfo.result.data);
+  const isAdmin = isUserAdmin(communityInfo.result.data, userInfo.result.data);
   if (!isAdmin) {
     throw new Error("User is not an admin");
   }
 
-  const deletedAirdrop = await prisma.airdrop.delete({
+  const deletedVesting = await prisma.vesting.delete({
     where: {
-      id: parseInt(airdropId),
+      id: parseInt(vestingId),
       communityId: communityInfo.result.data.id,
     }
   });
-  if (!deletedAirdrop) {
-    throw new Error("Airdrop not found");
+  if (!deletedVesting) {
+    throw new Error("Vesting not found");
   }
-
-  return redirect(`/?deleted=${airdropId}`);
 } 

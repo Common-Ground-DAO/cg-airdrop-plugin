@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { erc20Abi } from "viem";
 import type { AirdropClaim__factory, CgVesting__factory } from "~/contracts";
 import type { lsp7DigitalAssetAbi } from "@lukso/lsp7-contracts/abi";
 import type { lsp4DigitalAssetMetadataAbi } from "@lukso/lsp4-contracts/abi";
+import { useChains } from "wagmi";
 
 // Airdrop
 let _airdropFactory: typeof AirdropClaim__factory | null = null;
@@ -141,4 +142,21 @@ export function useLsp4Abi() {
     }, []);
 
     return abi;
+}
+
+export function useGetChainNameById() {
+    const chains = useChains();
+
+    const chainNameByChainId = useMemo(() => {
+        return chains.reduce((acc, chain) => {
+            acc.set(chain.id, chain.name);
+            return acc;
+        }, new Map<number, string>());
+    }, [chains]);
+
+    const getChainNameById = useCallback((chainId: number) => {
+        return (chainId !== undefined && chainNameByChainId.get(chainId)) || "Unknown chain";
+    }, [chainNameByChainId]);
+
+    return getChainNameById;
 }

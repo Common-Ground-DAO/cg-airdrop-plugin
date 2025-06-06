@@ -243,7 +243,7 @@ export default function AirdropDetailView({
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
-              chainName={airdrop.chainName}
+              chainId={airdrop.chainId}
               tokenAddress={airdrop.tokenAddress as `0x${string}`}
               small={true}
             />

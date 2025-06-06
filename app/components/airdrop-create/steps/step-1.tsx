@@ -77,7 +77,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep, validAddres
           <div className="w-[calc(100%-0.5rem)] ml-1 max-w-[calc(100%-0.5rem)] mt-4">
             <TokenMetadataDisplay
               tokenData={airdropData.tokenData}
-              chainName={airdropData.chainName}
+              chainId={airdropData.chainId}
               tokenAddress={airdropData.tokenAddress}
             />
           </div>

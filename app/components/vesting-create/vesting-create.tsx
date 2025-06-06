@@ -64,16 +64,6 @@ export default function VestingCreate() {
       return;
     }
 
-    if (!addressRegex.test(startTime)) {
-      setError("Invalid start time");
-      return;
-    }
-
-    if (!addressRegex.test(endTime)) {
-      setError("Invalid end time");
-      return;
-    }
-
     const startTimeSeconds = Math.floor(new Date(startTime).getTime() / 1000);
     const endTimeSeconds = Math.floor(new Date(endTime).getTime() / 1000);
     const durationSeconds = endTimeSeconds - startTimeSeconds;
@@ -104,7 +94,6 @@ export default function VestingCreate() {
 
     const formData = new FormData();
     formData.append("name", name!);
-    formData.append("creatorId", userInfo.id);
     formData.append("communityId", communityInfo.id);
     formData.append("tokenAddress", tokenAddress!);
     formData.append("contractAddress", contractAddress);
@@ -154,7 +143,7 @@ export default function VestingCreate() {
               className="input w-[calc(100%-0.5rem)] ml-1"
               id="address"
               value={beneficiaryAddress || ''}
-              onChange={(e) => setAddress(e.target.value as `0x${string}`)}
+              onChange={(e) => setBeneficiaryAddress(e.target.value as `0x${string}`)}
             />
           </fieldset>
           <fieldset className="fieldset w-full">

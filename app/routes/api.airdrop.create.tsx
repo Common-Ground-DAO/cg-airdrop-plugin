@@ -5,18 +5,15 @@ import { prisma } from '~/lib/db';
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
   const name = formData.get("name") as string;
-  const creatorId = formData.get("creatorId") as string;
-  const communityId = formData.get("communityId") as string;
   const tokenAddress = formData.get("tokenAddress") as string;
   const chainId = formData.get("chainId") as string;
-  const chainName = formData.get("chainName") as string;
   const airdropAddress = formData.get("airdropAddress") as string;
   const communityInfoRaw = formData.get("communityInfoRaw") as string;
   const userInfoRaw = formData.get("userInfoRaw") as string;
   const items = JSON.parse(formData.get("items") as string || "[]");
   const tree = JSON.parse(formData.get("tree") as string || "null");
 
-  // Todo: validate all fields?
+  // Todo: validate items === tree.leaves?
 
   const communityInfo = await validateCommunityData(communityInfoRaw);
   const userInfo = await validateUserData(userInfoRaw);
@@ -26,20 +23,17 @@ export async function action({ request }: { request: Request }) {
   if (communityInfoTimestampAge > 120_000 || userInfoTimestampAge > 120_000) {
     throw new Error("The provided signed community or user data is too old, please try again.");
   }
-  if (communityInfo.result.data.id !== communityId) {
-    throw new Error("Community ID mismatch");
-  }
-  if (userInfo.result.data.id !== creatorId) {
-    throw new Error("User ID mismatch");
-  }
-  const isAdmin = await isUserAdmin(communityInfo.result.data, userInfo.result.data);
+  const isAdmin = isUserAdmin(communityInfo.result.data, userInfo.result.data);
   if (!isAdmin) {
     throw new Error("User is not an admin");
+  }
+  if (items.length === 0 || tree === null) {
+    throw new Error("No items or tree to create an airdrop with");
   }
 
   const existingCount = await prisma.airdrop.count({
     where: {
-      communityId,
+      communityId: communityInfo.result.data.id,
     }
   });
   
@@ -50,11 +44,10 @@ export async function action({ request }: { request: Request }) {
   const { id: airdropId } = await prisma.airdrop.create({
     data: {
       name,
-      creatorId,
-      communityId,
+      creatorId: userInfo.result.data.id,
+      communityId: communityInfo.result.data.id,
       tokenAddress,
       chainId: parseInt(chainId),
-      chainName,
       airdropAddress,
       items: {
         createMany: {

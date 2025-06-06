@@ -10,7 +10,6 @@ export interface AirdropData {
   name?: string;
   tokenAddress?: `0x${string}`;
   chainId?: number;
-  chainName?: string;
   tokenData?: TokenData;
 }
 
@@ -20,23 +19,22 @@ export default function AirdropCreate() {
   const [step, setStep] = useState(0);
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
   const { chain } = useAccount();
-  const [airdropData, setAirdropData] = useState<AirdropData>({ chainId: chain?.id, chainName: chain?.name });
+  const [airdropData, setAirdropData] = useState<AirdropData>({ chainId: chain?.id });
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (chain?.id !== airdropData.chainId || chain?.name !== airdropData.chainName) {
+    if (chain?.id !== airdropData.chainId) {
       if (step !== 0) {
         setStep(0);
       }
       setAirdropData(old => ({
         ...old,
         chainId: chain?.id,
-        chainName: chain?.name,
         tokenAddress: undefined,
         tokenData: undefined,
       }));
     }
-  }, [chain, airdropData.chainId, airdropData.chainName, step]);
+  }, [chain, airdropData.chainId, step]);
 
   const validAddress = useMemo(() => {
     if (addressRegex.test(airdropData.tokenAddress || "")) {

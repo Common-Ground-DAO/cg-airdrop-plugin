@@ -1,14 +1,17 @@
 import type { TokenData } from "~/hooks/token-data";
 import { MdContentCopy } from "react-icons/md";
+import { useGetChainNameById } from "~/hooks/contracts";
 
 interface TokenMetadataDisplayProps {
   tokenData?: TokenData;
   tokenAddress?: `0x${string}`;
-  chainName?: string;
+  chainId?: number;
   small?: boolean;
 }
 
-export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddress, small }: TokenMetadataDisplayProps) {
+export default function TokenMetadataDisplay({ tokenData, chainId, tokenAddress, small }: TokenMetadataDisplayProps) {
+  const getChainNameById = useGetChainNameById();
+
   if (!tokenData) {
     return <div className="p-4 text-gray-500 w-full max-w-full text-center">No contract data provided</div>;
   }
@@ -40,7 +43,7 @@ export default function TokenMetadataDisplay({ tokenData, chainName, tokenAddres
             <div className={`badge badge-sm badge-primary`}>
               {tokenData.type === "lsp7" ? 'LSP7' : 'ERC20'}
             </div>
-            {chainName && <div className="badge badge-sm badge-primary">{chainName}</div>}
+            {chainId !== undefined && <div className="badge badge-sm badge-primary">{getChainNameById(chainId)}</div>}
           </div>
           <div className="text-xs text-gray-500 flex flex-row items-center font-mono">
             {tokenAddress?.substring(0, 6)}...{tokenAddress?.substring(tokenAddress.length - 4)}

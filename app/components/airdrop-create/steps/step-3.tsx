@@ -6,6 +6,7 @@ import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button"
 import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
+import { useGetChainNameById } from "~/hooks/contracts";
 
 interface StepThreeProps {
   airdropData: AirdropData;
@@ -21,6 +22,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
   const navigate = useNavigate();
   const factory = useAirdropContractFactory();
   const submitTriggered = useRef(false);
+  const getChainNameById = useGetChainNameById();
 
   const {
     deployContract,
@@ -53,12 +55,9 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
 
     const formData = new FormData();
     formData.append("name", airdropData.name!);
-    formData.append("creatorId", userInfo.id);
-    formData.append("communityId", communityInfo.id);
     formData.append("tokenAddress", airdropData.tokenAddress!);
     formData.append("airdropAddress", contractAddress);
     formData.append("chainId", airdropData.chainId!.toString());
-    formData.append("chainName", airdropData.chainName!);
     formData.append("communityInfoRaw", __communityInfoRawResponse!);
     formData.append("userInfoRaw", __userInfoRawResponse!);
     formData.append("items", JSON.stringify(
@@ -155,7 +154,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
   return <div className="h-full flex flex-col items-center justify-start w-full px-2">
     <div className="flex flex-col flex-1 w-full items-center overflow-auto">
       <div className="flex flex-col grow gap-4 max-w-md w-md items-center flex-1">
-        <p>You are about to create an airdrop <b>{airdropData.name}</b> on <b>{airdropData.chainName}</b>.</p>
+        <p>You are about to create an airdrop <b>{airdropData.name}</b> on <b>{getChainNameById(airdropData.chainId!)}</b>.</p>
         <div className="card bg-base-300 w-full max-w-full">
           <div className="card-body">
             <div className="card-title">Airdrop Details</div>
@@ -206,7 +205,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
         </div>
         <TokenMetadataDisplay
           tokenData={airdropData.tokenData}
-          chainName={airdropData.chainName}
+          chainId={airdropData.chainId}
           tokenAddress={airdropData.tokenAddress}
         />
         {error && (

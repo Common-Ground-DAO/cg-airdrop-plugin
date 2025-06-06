@@ -8,11 +8,11 @@ export async function action({ request }: { request: Request }) {
     return { error: "Community ID is required and must be a string" };
   }
 
-  const airdrops = await prisma.airdrop.findMany({
+  const vestings = await prisma.vesting.findMany({
     where: {
       communityId
     }
   });
 
-  return airdrops;
+  return vestings;
 } 

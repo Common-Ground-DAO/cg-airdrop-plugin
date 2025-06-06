@@ -61,7 +61,7 @@ export async function validateUserData(data: string) {
   };
 }
 
-export async function isUserAdmin(communityInfo: CommunityInfoResponsePayload, userInfo: UserInfoResponsePayload) {
+export function isUserAdmin(communityInfo: CommunityInfoResponsePayload, userInfo: UserInfoResponsePayload) {
   const adminRole = communityInfo.roles.find((role) => role.title === "Admin" && role.type === "PREDEFINED");
   if (!adminRole) {
     throw new Error("Community does not have an admin role");

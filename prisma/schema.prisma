@@ -21,7 +21,6 @@ model Airdrop {
   communityId      String
   airdropAddress   String
   tokenAddress     String
-  chainName        String
   chainId          Int
   createdAt        DateTime       @default(now())
   items            AirdropItem[]
@@ -50,6 +49,8 @@ model MerkleTree {
 }
 
 model Vesting {
+  id               Int            @id @default(autoincrement())
+  name             String
   address          String
   creatorId        String
   communityId      String
@@ -57,12 +58,11 @@ model Vesting {
   contractAddress  String
   chainId          Int
   createdAt        DateTime       @default(now())
-  startTime        DateTime
-  endTime          DateTime
+  startTimeSeconds Int
+  endTimeSeconds   Int
 
-  @@id([contractAddress, chainId])
   @@index(fields: [address])
   @@index(fields: [communityId])
-  @@index(fields: [startTime])
-  @@index(fields: [endTime])
+  @@index(fields: [startTimeSeconds])
+  @@index(fields: [endTimeSeconds])
 }

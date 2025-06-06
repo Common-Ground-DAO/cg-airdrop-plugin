@@ -18,7 +18,7 @@ export async function action({ request }: { request: Request }) {
   if (communityInfoTimestampAge > 120_000 || userInfoTimestampAge > 120_000) {
     throw new Error("The provided signed community or user data is too old, please try again.");
   }
-  const isAdmin = await isUserAdmin(communityInfo.result.data, userInfo.result.data);
+  const isAdmin = isUserAdmin(communityInfo.result.data, userInfo.result.data);
   if (!isAdmin) {
     throw new Error("User is not an admin");
   }
