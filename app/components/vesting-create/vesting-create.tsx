@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFetcher, useSubmit } from "react-router";
+import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useAccount, useDeployContract, useWaitForTransactionReceipt } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 import { useVestingContractFactory } from "~/hooks";
@@ -13,15 +13,17 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/;
 
 export interface VestingData {
   name: string;
-  address: `0x${string}`;
+  beneficiaryAddress: `0x${string}`;
   tokenAddress: `0x${string}`;
-  contractAddress: `0x${string}`;
-  startTime: number;
-  endTime: number;
+  chainId: number;
+  contractAddress?: `0x${string}`;
+  startTimeSeconds: number;
+  endTimeSeconds: number;
 }
 
 export default function VestingCreate() {
   const [name, setName] = useState<string | undefined>(undefined);
+  const [vestingData, setVestingData] = useState<VestingData | undefined>(undefined);
   const [beneficiaryAddress, setBeneficiaryAddress] = useState<`0x${string}` | undefined>(undefined);
   const [tokenAddress, setTokenAddress] = useState<`0x${string}` | undefined>(undefined);
   const [startTime, setStartTime] = useState<string | undefined>(undefined);
@@ -33,6 +35,7 @@ export default function VestingCreate() {
   const { chain } = useAccount();
   const submit = useSubmit();
   const submitTriggered = useRef(false);
+  const navigate = useNavigate();
 
   const {
     deployContract,
@@ -51,53 +54,85 @@ export default function VestingCreate() {
   });
 
   const handleCreateVesting = useCallback(() => {
-    if (!communityInfo || !userInfo || !factory || !beneficiaryAddress || !startTime || !endTime || !tokenAddress) return;
-    setError(null);
-
-    if (!addressRegex.test(beneficiaryAddress)) {
+    let startTimeSeconds: number | undefined;
+    let endTimeSeconds: number | undefined;
+    if (startTime) {
+      try {
+        startTimeSeconds = Math.floor((new Date(startTime)).getTime() / 1000);
+      }
+      catch (e) {}
+    }
+    if (endTime) {
+      try {
+        endTimeSeconds = Math.floor((new Date(endTime)).getTime() / 1000);
+      }
+      catch (e) {}
+    }
+    if (startTimeSeconds === undefined || endTimeSeconds === undefined || endTimeSeconds < startTimeSeconds) {
+      setError("Invalid start or end time");
+    }
+    else if (!communityInfo || !userInfo) {
+      setError("Invalid community or user");
+    }
+    else if (!factory) {
+      setError("Invalid contract factory");
+    }
+    else if (!name) {
+      setError("Invalid name");
+    }
+    else if (!beneficiaryAddress || !addressRegex.test(beneficiaryAddress)) {
       setError("Invalid beneficiary address");
-      return;
     }
-
-    if (!addressRegex.test(tokenAddress)) {
+    else if (!tokenAddress || !addressRegex.test(tokenAddress)) {
       setError("Invalid token address");
-      return;
     }
-
-    const startTimeSeconds = Math.floor(new Date(startTime).getTime() / 1000);
-    const endTimeSeconds = Math.floor(new Date(endTime).getTime() / 1000);
-    const durationSeconds = endTimeSeconds - startTimeSeconds;
-
-    if (startTimeSeconds >= endTimeSeconds) {
-      setError("Start time must be before end time");
-      return;
+    else if (chain?.id === undefined) {
+      setError("Invalid chain");
     }
+    else {
+      setError(null);
+      const durationSeconds = endTimeSeconds - startTimeSeconds;
+      setVestingData({
+        name,
+        beneficiaryAddress,
+        tokenAddress,
+        chainId: chain?.id,
+        startTimeSeconds,
+        endTimeSeconds,
+      });
 
-    deployContract({
-      abi: factory.abi,
-      bytecode: factory.bytecode,
-      args: [beneficiaryAddress!, BigInt(startTimeSeconds), BigInt(durationSeconds)],
-      chainId: chain?.id,
-    }, {
-      onError(error) {
-        setError("Error deploying airdrop contract: " + error.message);
-        console.error("Error deploying airdrop contract", error);
-      },
-    });
+      deployContract({
+        abi: factory.abi,
+        bytecode: factory.bytecode,
+        args: [beneficiaryAddress!, BigInt(startTimeSeconds), BigInt(durationSeconds)],
+        chainId: chain?.id,
+      }, {
+        onError(error) {
+          setError("Error deploying airdrop contract: " + error.message);
+          console.error("Error deploying airdrop contract", error);
+        },
+      });
+    }
   }, [communityInfo, userInfo, deployContract, factory, chain?.id, beneficiaryAddress, startTime, endTime, tokenAddress]);
 
   // Submit to database when we have the contract address
   const handleSubmitToDatabase = useCallback(async (contractAddress: string) => {
     if (!communityInfo || !userInfo) return;
+    if (!vestingData) {
+      setError("Invalid vesting data");
+      return;
+    };
 
     console.log("Submitting airdrop to database with contract address:", contractAddress);
 
     const formData = new FormData();
-    formData.append("name", name!);
-    formData.append("communityId", communityInfo.id);
-    formData.append("tokenAddress", tokenAddress!);
+    formData.append("name", vestingData.name);
+    formData.append("beneficiaryAddress", vestingData.beneficiaryAddress);
+    formData.append("tokenAddress", vestingData.tokenAddress);
     formData.append("contractAddress", contractAddress);
-    formData.append("chainId", chain?.id!.toString()!);
+    formData.append("chainId", vestingData.chainId.toString());
+    formData.append("startTimeSeconds", vestingData.startTimeSeconds.toString());
+    formData.append("endTimeSeconds", vestingData.endTimeSeconds.toString());
     formData.append("communityInfoRaw", __communityInfoRawResponse!);
     formData.append("userInfoRaw", __userInfoRawResponse!);
 
@@ -107,7 +142,7 @@ export default function VestingCreate() {
       console.error("Error submitting airdrop to database", error);
       setError("Error submitting airdrop to database");
     }
-  }, [communityInfo, userInfo, submit, chain?.id, tokenAddress, name, __communityInfoRawResponse, __userInfoRawResponse]);
+  }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse]);
 
   const inProgress = isPending || isSuccess || isConfirming || isConfirmed;
 
@@ -178,13 +213,34 @@ export default function VestingCreate() {
               onChange={(e) => setEndTime(e.target.value)}
             />
           </fieldset>
+          {error && <div className="collapse collapse-arrow bg-error">
+            <input type="checkbox" />
+            <div className="collapse-title font-semibold">Error</div>
+            <div className="collapse-content text-sm">
+              {error}
+            </div>  
+          </div>}
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 m-4">
-        <button
-          className="btn btn-primary"
-          onClick={() => console.log("Deploying vesting contract...")}
-        >Finish</button>
+        {!inProgress && !fetcher.data && (
+          <button
+            className="btn btn-primary"
+            onClick={handleCreateVesting}
+          >Deploy and Submit</button>
+        )}
+        {inProgress && !fetcher.data && (
+          <button
+            className="btn btn-primary"
+            disabled
+          >Deploying...</button>
+        )}
+        {fetcher.data && (
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/airdrops/${fetcher.data.airdropId}`)}
+          >Finish</button>
+        )}
       </div>
     </div>
   );

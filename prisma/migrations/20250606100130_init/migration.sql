@@ -31,7 +31,7 @@ CREATE TABLE "MerkleTree" (
 CREATE TABLE "Vesting" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
+    "beneficiaryAddress" TEXT NOT NULL,
     "creatorId" TEXT NOT NULL,
     "communityId" TEXT NOT NULL,
     "tokenAddress" TEXT NOT NULL,
@@ -55,7 +55,7 @@ CREATE INDEX "AirdropItem_address_idx" ON "AirdropItem"("address");
 CREATE INDEX "MerkleTree_airdropId_idx" ON "MerkleTree"("airdropId");
 
 -- CreateIndex
-CREATE INDEX "Vesting_address_idx" ON "Vesting"("address");
+CREATE INDEX "Vesting_beneficiaryAddress_idx" ON "Vesting"("beneficiaryAddress");
 
 -- CreateIndex
 CREATE INDEX "Vesting_communityId_idx" ON "Vesting"("communityId");

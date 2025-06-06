@@ -20,7 +20,6 @@ export default function AirdropCreate() {
   const [csvResult, setCsvResult] = useState<CsvUploadResult | null>(null);
   const { chain } = useAccount();
   const [airdropData, setAirdropData] = useState<AirdropData>({ chainId: chain?.id });
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (chain?.id !== airdropData.chainId) {

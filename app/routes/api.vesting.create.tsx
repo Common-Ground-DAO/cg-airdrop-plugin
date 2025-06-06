@@ -7,7 +7,7 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/;
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
   const name = formData.get("name") as string;
-  const address = formData.get("address") as `0x${string}`;
+  const beneficiaryAddress = formData.get("beneficiaryAddress") as `0x${string}`;
   const tokenAddress = formData.get("tokenAddress") as `0x${string}`;
   const startTimeSeconds = formData.get("startTimeSeconds") as string;
   const endTimeSeconds = formData.get("endTimeSeconds") as string;
@@ -29,7 +29,7 @@ export async function action({ request }: { request: Request }) {
     throw new Error("User is not an admin");
   }
 
-  if (!addressRegex.test(address)) {
+  if (!addressRegex.test(beneficiaryAddress)) {
     throw new Error("Invalid address");
   }
   if (!addressRegex.test(contractAddress)) {
@@ -54,7 +54,7 @@ export async function action({ request }: { request: Request }) {
   const { id: vestingId } = await prisma.vesting.create({
     data: {
       name,
-      address,
+      beneficiaryAddress,
       startTimeSeconds: parseInt(startTimeSeconds),
       endTimeSeconds: parseInt(endTimeSeconds),
       creatorId: userInfo.result.data.id,

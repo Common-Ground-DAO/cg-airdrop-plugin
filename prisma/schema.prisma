@@ -49,19 +49,19 @@ model MerkleTree {
 }
 
 model Vesting {
-  id               Int            @id @default(autoincrement())
-  name             String
-  address          String
-  creatorId        String
-  communityId      String
-  tokenAddress     String
-  contractAddress  String
-  chainId          Int
-  createdAt        DateTime       @default(now())
-  startTimeSeconds Int
-  endTimeSeconds   Int
+  id                  Int            @id @default(autoincrement())
+  name                String
+  beneficiaryAddress  String
+  creatorId           String
+  communityId         String
+  tokenAddress        String
+  contractAddress     String
+  chainId             Int
+  createdAt           DateTime       @default(now())
+  startTimeSeconds    Int
+  endTimeSeconds      Int
 
-  @@index(fields: [address])
+  @@index(fields: [beneficiaryAddress])
   @@index(fields: [communityId])
   @@index(fields: [startTimeSeconds])
   @@index(fields: [endTimeSeconds])
