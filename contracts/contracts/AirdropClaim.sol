@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@lukso/lsp7-contracts/contracts/ILSP7DigitalAsset.sol";
 import {
   _INTERFACEID_LSP7,
@@ -41,7 +41,7 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
      * @param _token The token contract address
      * @param _merkleRoot The merkle root of the airdrop distribution
      */
-    constructor(address _token, bytes32 _merkleRoot) Ownable(msg.sender) {
+    constructor(address _token, bytes32 _merkleRoot) Ownable() {
         // Todo: Check if Ownable is compatible with deployment through UP extension
 
         token = _token;

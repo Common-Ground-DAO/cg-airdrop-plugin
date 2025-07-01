@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useAccount, useDeployContract, useWaitForTransactionReceipt } from "wagmi";
 import { useCgData } from "~/context/cg_data";
-import { useVestingContractFactory } from "~/hooks";
+import { useTokenData, useVestingContractFactory } from "~/hooks";
+import type { TokenData } from "~/hooks/token-data";
+import TokenMetadataDisplay from "../token-metadata-display";
 
 /**
  * The vesting contract can actually handle multiple tokens,
@@ -19,6 +21,7 @@ export interface VestingData {
   contractAddress?: `0x${string}`;
   startTimeSeconds: number;
   endTimeSeconds: number;
+  tokenData?: TokenData;
 }
 
 export default function VestingCreate() {
@@ -52,6 +55,24 @@ export default function VestingCreate() {
   } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  const validAddress = useMemo(() => {
+    if (tokenAddress && addressRegex.test(tokenAddress || "")) {
+      return tokenAddress as `0x${string}`;
+    }
+    return undefined;
+  }, [tokenAddress]);
+
+  const tokenData = useTokenData(validAddress, chain?.id);
+
+  useEffect(() => {
+    if (!!tokenData) {
+      setVestingData(old => ({
+        ...old!,
+        tokenData,
+      }));
+    }
+  }, [tokenData]);
 
   const handleCreateVesting = useCallback(() => {
     let startTimeSeconds: number | undefined;
@@ -92,14 +113,15 @@ export default function VestingCreate() {
     else {
       setError(null);
       const durationSeconds = endTimeSeconds - startTimeSeconds;
-      setVestingData({
+      setVestingData(old => ({
         name,
         beneficiaryAddress,
         tokenAddress,
         chainId: chain?.id,
         startTimeSeconds,
         endTimeSeconds,
-      });
+        tokenData: old?.tokenData,
+      }));
 
       deployContract({
         abi: factory.abi,
@@ -220,6 +242,13 @@ export default function VestingCreate() {
               {error}
             </div>  
           </div>}
+          <div className="w-[calc(100%-0.5rem)] ml-1 max-w-[calc(100%-0.5rem)] mt-4">
+            <TokenMetadataDisplay
+              tokenData={vestingData?.tokenData}
+              chainId={vestingData?.chainId}
+              tokenAddress={vestingData?.tokenAddress}
+            />
+          </div>
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 m-4">

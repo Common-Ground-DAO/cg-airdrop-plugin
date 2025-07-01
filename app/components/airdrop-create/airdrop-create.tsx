@@ -3,8 +3,6 @@ import type { CsvUploadResult } from "../csv-upload-button/csv-upload-button";
 import { useAccount } from "wagmi";
 import { AirdropSetupStepOne, AirdropSetupStepThree, AirdropSetupStepTwo } from "./steps";
 import { useTokenData, type TokenData } from "~/hooks/token-data";
-import { useNavigate } from "react-router";
-import { IoArrowBack } from "react-icons/io5";
 
 export interface AirdropData {
   name?: string;

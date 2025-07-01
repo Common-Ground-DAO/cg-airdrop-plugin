@@ -1,13 +1,20 @@
 import { NavLink } from "react-router";
 import { useCgData } from "~/context/cg_data";
+import type { Vesting } from "generated/prisma";
 
 export interface VestingDetailViewProps {
-
+  vesting: Vesting;
+  deleteVesting: (vestingId: number) => Promise<void>;
+  deleteIsSubmitting: boolean;
 }
 
-export default function VestingDetailView(props: VestingDetailViewProps) {
+export default function VestingDetailView({
+  vesting,
+  deleteVesting,
+  deleteIsSubmitting,
+}: VestingDetailViewProps) {
   const { isAdmin } = useCgData();
-  
+
   return (
     <div className="flex-1 card px-6 py-4 bg-base-100 mr-4 overflow-auto shadow-lg">
       <div className="flex flex-col gap-4 flex-1 items-center">

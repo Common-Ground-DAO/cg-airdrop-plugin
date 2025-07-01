@@ -11,3 +11,13 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.js
 ```
+
+## Deployment
+
+To deploy the mock contracts (MockToken and MockLSP7) to your local Hardhat network, run:
+
+```
+npm run hardhat:deploy
+```
+
+This will deploy both contracts and print their addresses to the console.

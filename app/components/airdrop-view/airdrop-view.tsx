@@ -48,13 +48,11 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
       formData.append("airdropId", airdropId.toString());
       formData.append("communityInfoRaw", __communityInfoRawResponse || "");
       formData.append("userInfoRaw", __userInfoRawResponse || "");
+      await submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });
       newDeletedIdsSet.add(airdropId);
       setDeletedIdsSet(newDeletedIdsSet);
-      await submit(formData, { method: "post", action: `/api/airdrop/delete`, navigate: false });      
     }
     catch (error) {
-      newDeletedIdsSet.delete(airdropId);
-      setDeletedIdsSet(newDeletedIdsSet);
       console.error("Error deleting airdrop: " + error);
     }
     finally {

@@ -73,9 +73,9 @@ contract CgVesting is VestingWallet {
         ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_14_0);
     }
     if (isLsp7) {
-      ILSP7DigitalAsset(token).transfer(address(this), owner(), amount, true, "");
+      ILSP7DigitalAsset(token).transfer(address(this), beneficiary(), amount, true, "");
     } else {
-      SafeERC20.safeTransfer(IERC20(token), owner(), amount);
+      SafeERC20.safeTransfer(IERC20(token), beneficiary(), amount);
     }
   }
 }

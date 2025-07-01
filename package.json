@@ -13,14 +13,17 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "hardhat:node": "cd contracts && npx hardhat node",
-    "hardhat:compile": "cd contracts && npx hardhat compile && rm -rf ../app/contracts && mkdir -p ../app/contracts && cp -r typechain/* ../app/contracts/"
+    "hardhat:node": "npx hardhat node --config contracts/hardhat.config.cjs",
+    "hardhat:compile": "npx hardhat compile --config contracts/hardhat.config.cjs",
+    "hardhat:deploy": "npx hardhat run --config contracts/hardhat.config.cjs contracts/scripts/deploy-mocks.ts --network localhost"
   },
   "dependencies": {
     "@common-ground-dao/cg-plugin-lib": "^0.9.13",
     "@common-ground-dao/cg-plugin-lib-host": "^0.9.13",
     "@erc725/erc725.js": "^0.28.1",
-    "@openzeppelin/contracts": "^5.0.2",
+    "@lukso/lsp4-contracts": "^0.16.4",
+    "@lukso/lsp7-contracts": "^0.16.5",
+    "@openzeppelin/contracts": "^4.9.6",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/client": "^6.8.2",
     "@react-router/node": "^7.5.3",
@@ -37,7 +40,6 @@
     "wagmi": "^2.15.4"
   },
   "devDependencies": {
-    "@lukso/lsp-smart-contracts": "^0.16.3",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
