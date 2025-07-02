@@ -143,10 +143,11 @@ export default function VestingDetailView({
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
-        <nav className="flex flex-row gap-1 items-center m-4 mb-0">
-          <NavLink to="/vestings" className="btn btn-ghost btn-circle btn-xs">
-            <IoArrowBack className="w-4 h-4" />
+        <nav className="flex flex-row gap-2 items-center m-4 mb-0">
+          <NavLink to="/vestings" className="text-xl font-bold hover:underline">
+            Vestings
           </NavLink>
+          <div className="text-xl font-bold">&gt;</div>
           <div className="text-xl font-bold">{vesting.name}</div>
           {isAdmin && <div className="flex flex-row items-center justify-end flex-1 shrink-0">
             <button
