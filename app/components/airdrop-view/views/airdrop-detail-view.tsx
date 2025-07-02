@@ -5,7 +5,7 @@ import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
-import { useAccount, useReadContract, useWriteContract, useTransactionReceipt } from "wagmi";
+import { useAccount, useReadContract, useTransactionReceipt, useWriteContract } from "wagmi";
 import { formatUnits, parseUnits } from "viem";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
@@ -45,10 +45,6 @@ export default function AirdropDetailView({
   const { data: transactionReceipt, isLoading: isLoadingTransactionReceipt, error: transactionReceiptError } = useTransactionReceipt({
     hash: writeContractData as `0x${string}`,
   });
-
-  // const { data: transactionConfirmations, isLoading: isLoadingTransactionConfirmations, error: transactionConfirmationsError } = useTransactionConfirmations({
-  //   hash: writeContractData as `0x${string}`,
-  // });
 
   const setFundsToAdd = useCallback((value: string) => {
     if (/^\d*\.?\d*$/.test(value)) {
@@ -355,7 +351,7 @@ export default function AirdropDetailView({
       <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Are you sure you want to delete this airdrop?</h3>
-          <p className="py-4">This action cannot be undone.</p>
+          <p className="py-4">This action cannot be undone and does not affect any deployed contracts.</p>
           <div className="modal-action">
             <form method="dialog">
               <button className="btn btn-soft">Cancel</button>

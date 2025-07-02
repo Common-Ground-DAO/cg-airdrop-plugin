@@ -1,12 +1,13 @@
 const thousands_sep_regex = /\B(?=(\d{3})+(?!\d))/g;
 
-export default function FormatUnits({value, decimals, className}: {value: string, decimals: number, className?: string}) {
+export default function FormatUnits({value, decimals, className}: {value: string | bigint, decimals: number, className?: string}) {
     const thousands_sep = ",";
     const decimal_sep = ".";
-    if (!/^\d+$/.test(value)) {
-      console.error("Invalid value: Must be a string of digits", value);
+    if (typeof value === "string" && !/^\d+$/.test(value)) {
+      console.error("Invalid string value: Must be a string of digits", value);
       return <div className="text-red-500">Invalid number format</div>;
     }
+    value = value.toString();
     if (typeof decimals !== "number" || decimals < 0 || Math.floor(decimals) !== decimals) {
       console.error("Invalid decimals: Must be an integer and greater than -1", decimals);
       return <div className="text-red-500">Invalid decimals</div>;

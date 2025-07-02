@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useNavigate, useSubmit } from "react-router";
-import { useAccount, useDeployContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useDeployContract, useTransactionConfirmations, useWaitForTransactionReceipt } from "wagmi";
 import { useCgData } from "~/context/cg_data";
 import { useTokenData, useVestingContractFactory } from "~/hooks";
 import type { TokenData } from "~/hooks/token-data";
@@ -55,6 +55,15 @@ export default function VestingCreate() {
   } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  const {
+    data: transactionConfirmations,
+    isLoading: isLoadingTransactionConfirmations,
+    error: transactionConfirmationsError
+  } = useTransactionConfirmations({
+    hash: txHash,
+  });
+
 
   const validAddress = useMemo(() => {
     if (tokenAddress && addressRegex.test(tokenAddress || "")) {
@@ -130,8 +139,8 @@ export default function VestingCreate() {
         chainId: chain?.id,
       }, {
         onError(error) {
-          setError("Error deploying airdrop contract: " + error.message);
-          console.error("Error deploying airdrop contract", error);
+          setError("Error deploying vesting contract: " + error.message);
+          console.error("Error deploying vesting contract", error);
         },
       });
     }
@@ -145,7 +154,7 @@ export default function VestingCreate() {
       return;
     };
 
-    console.log("Submitting airdrop to database with contract address:", contractAddress);
+    console.log("Submitting vesting to database with contract address:", contractAddress);
 
     const formData = new FormData();
     formData.append("name", vestingData.name);
@@ -161,8 +170,8 @@ export default function VestingCreate() {
     try {
       await fetcher.submit(formData, { method: "post", action: "/api/vesting/create" });
     } catch (error) {
-      console.error("Error submitting airdrop to database", error);
-      setError("Error submitting airdrop to database");
+      console.error("Error submitting vesting to database", error);
+      setError("Error submitting vesting to database");
     }
   }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse]);
 
@@ -252,6 +261,11 @@ export default function VestingCreate() {
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 m-4">
+        {transactionConfirmations !== undefined && (
+          <div className="text-xs">
+            Transaction confirmations: {transactionConfirmations.toString()}
+          </div>
+        )}
         {!inProgress && !fetcher.data && (
           <button
             className="btn btn-primary"
@@ -267,7 +281,7 @@ export default function VestingCreate() {
         {fetcher.data && (
           <button
             className="btn btn-primary"
-            onClick={() => navigate(`/airdrops/${fetcher.data.airdropId}`)}
+            onClick={() => navigate(`/vestings/${fetcher.data.vestingId}`)}
           >Finish</button>
         )}
       </div>

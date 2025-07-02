@@ -3,7 +3,7 @@ import { useFetcher, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropContractFactory } from "~/hooks";
 import type { CsvUploadResult } from "../../csv-upload-button/csv-upload-button";
-import { useDeployContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
+import { useDeployContract, useReadContract, useTransactionConfirmations, useWaitForTransactionReceipt } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
 import { useGetChainNameById } from "~/hooks/contracts";
@@ -37,6 +37,14 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
     isLoading: isConfirming,
     isSuccess: isConfirmed
   } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
+
+  const {
+    data: transactionConfirmations,
+    isLoading: isLoadingTransactionConfirmations,
+    error: transactionConfirmationsError
+  } = useTransactionConfirmations({
     hash: txHash,
   });
 
@@ -224,6 +232,11 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
       </div>
     </div>
     <div className="flex flex-col items-center gap-2 pt-4 mt-auto mb-2">
+      {transactionConfirmations !== undefined && (
+        <div className="text-xs">
+          Transaction confirmations: {transactionConfirmations.toString()}
+        </div>
+      )}
       <div className="flex flex-row gap-2">
         {!inProgress && <>
           <button

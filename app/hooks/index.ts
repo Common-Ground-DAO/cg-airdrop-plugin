@@ -1,4 +1,12 @@
-import { useAirdropContractFactory, useAirdropAbi, useVestingContractFactory, useVestingAbi } from "./contracts";
+import {
+    useAirdropContractFactory,
+    useAirdropAbi,
+    useVestingContractFactory,
+    useVestingAbi,
+    useErc20Abi,
+    useLsp7Abi,
+    useLsp4Abi,
+} from "./contracts";
 import { useTokenData } from "./token-data";
 
 export {
@@ -6,5 +14,8 @@ export {
     useAirdropAbi,
     useVestingContractFactory,
     useVestingAbi,
+    useErc20Abi,
+    useLsp7Abi,
+    useLsp4Abi,
     useTokenData,
 }
