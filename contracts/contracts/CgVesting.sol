@@ -39,7 +39,7 @@ import {
  */
 contract CgVesting is VestingWallet {
   event TokensReleased(address indexed token, uint256 amount);
-  mapping(address token => uint256) private _tokensReleased;
+  mapping(address => uint256) private _tokensReleased;
   uint256 public constant VERSION = 1;
 
   /**
@@ -65,8 +65,8 @@ contract CgVesting is VestingWallet {
     _tokensReleased[token] += amount;
     emit TokensReleased(token, amount);
     bool isLsp7 = false;
-    bool isErc165 = ERC165Checker.supportsERC165(token);
-    if (isErc165) {
+    if (ERC165Checker.supportsERC165(token)) {
+      // Todo: Check if all LSP7 versions have the same transfer function signature
       isLsp7 = 
         ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7) ||
         ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_12_0) ||
@@ -75,6 +75,7 @@ contract CgVesting is VestingWallet {
     if (isLsp7) {
       ILSP7DigitalAsset(token).transfer(address(this), beneficiary(), amount, true, "");
     } else {
+      // try ERC20 transfer
       SafeERC20.safeTransfer(IERC20(token), beneficiary(), amount);
     }
   }
