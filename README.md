@@ -1,24 +1,10 @@
-# CG Airdrop Plugin
+# CG Airdrop & Vesting Plugin
 
-**A plugin for the [Common Ground](https://app.cg) platform**
+**A plugin for the Common Ground platform**
 
 This project is a plugin for the [Common Ground](https://app.cg) community platform. It serves as a current best practice example for utilizing community roles for backend authentication. Communities can now manage both airdrops and vestings in a simple and secure manner, leveraging Common Ground's role-based access control for all sensitive operations.
 
-You can use your own community on [Common Ground](https://app.cg) to run and test this plugin locally. You can also set up a testing community for this purpose.
-- Go to your community settings
-- Create a plugin
-- As plugin URL, set http://localhost:5173
-- Create a file .env.local in the root folder of this repository
-- There, add
-
-```
-VITE_PLUGIN_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n---data---\n-----END PUBLIC KEY-----\n"
-PLUGIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n---data---\n-----END PRIVATE KEY-----\n"
-COOKIE_SECRET=some_random_value
-```
-
-- run `npm run dev` and `npm run hardhat:node`
-- connect your local wallet plugin to hardhat (Metamask, Rabby, etc.)
+You can use your own community to run and test this plugin locally. You can also set up a testing community for this purpose.
 
 ## Features
 
@@ -34,7 +20,7 @@ COOKIE_SECRET=some_random_value
 ## Token Compatibility
 
 - **ERC20**: Fully supported for airdrops and vestings
-- **LUKSO LSP7**: Fully supported for airdrops and vestings (including test contracts)
+- **LUKSO LSP7**: Fully supported for airdrops and vestings
 
 ## Smart Contracts
 
@@ -44,36 +30,31 @@ Contracts available in `contracts/contracts/`:
 - **MockToken.sol**: ERC20 token for testing
 - **MockLSP7.sol**: LUKSO LSP7 token for testing
 
-## Setup
+## Local Setup
 
-### 1. Install Dependencies
-```bash
-npm install
+- Go to your community settings
+- Create a plugin
+- As plugin URL, set http://localhost:5173
+- Copy the key data (variables are named slightly different there)
+- Create a file .env.local in the root folder of this repository
+- There, add the private and public key, and a cookie secret. Make sure you use exactly the variable names shown below:
+
+```
+VITE_PLUGIN_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n---data---\n-----END PUBLIC KEY-----\n"
+PLUGIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n---data---\n-----END PRIVATE KEY-----\n"
+COOKIE_SECRET=some_random_value
 ```
 
-### 2. Generate Contract Types
-```bash
-npm run generate-types
-```
-This compiles Solidity contracts and generates TypeScript types.
+- run `npm install`
+- run `npm run hardhat:compile`
+- run `npm run dev`
+- the plugin should now load when visiting it in your community
 
-### 3. Setup Database
-```bash
-npm run prisma:migrate
-```
-This creates the SQLite database and applies migrations.
-
-### 4. Generate Prisma Client
-```bash
-npm run prisma:generate
-```
-This generates the Prisma client for database operations.
-
-### 5. Start Development Server
-```bash
-npm run dev
-```
-The app will be available at `http://localhost:5173`
+To use a local hardhat node for testing with smart contracts (optional):
+- run `npm run hardhat:node`
+- run `npm run hardhat:deploy` to deploy an erc20 and an lsp7 token for local testing
+- add the local HardHat chain to your local wallet plugin (Metamask, Rabby, etc.)
+  - You can simply do that by connecting your wallet and selecting HardHat in the chain dropdown
 
 ## Available npm Scripts
 
@@ -123,11 +104,6 @@ The plugin allows communities to create and manage token vesting contracts for t
 - **Manage Vestings**: The UI provides a list of all vestings for the community. Each vesting shows details such as beneficiary, contract address, start/end time, released/releasable/vested amounts, and total vesting amount.
 - **Claiming**: Beneficiaries can connect their wallet and claim their vested tokens directly from the UI.
 - **Role-based Access**: Only community admins (as determined by Common Ground roles) can create or delete vestings. All actions are authenticated using signed community/user data from the Common Ground platform.
-
-## API Endpoints
-
-- `POST /api/airdrops` - Create new airdrop record
-- `POST /api/vestings` - Create new vesting record
 
 ## Project Structure
 

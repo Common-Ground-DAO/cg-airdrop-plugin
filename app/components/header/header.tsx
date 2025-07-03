@@ -1,4 +1,4 @@
-import type { CommunityInfoResponsePayload, UserInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
+import type { CommunityInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
 import { IoChevronDown } from "react-icons/io5";
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useChains } from "wagmi";
 import { useCgData } from "~/context/cg_data";
