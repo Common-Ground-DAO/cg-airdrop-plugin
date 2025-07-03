@@ -57,14 +57,14 @@ describe("AirdropClaim", function () {
     const proof1 = merkleTree.getProof(index1);
     
     // Initial state
-    expect(await airdropClaim.hasClaimed(addr1.address)).to.be.false;
+    expect(await airdropClaim.hasClaimed(addr1.address, amount1)).to.be.false;
     const initialBalance = await token.balanceOf(addr1.address);
     
     // Claim tokens
-    await airdropClaim.connect(addr1).claim(amount1, proof1);
+    await airdropClaim.connect(addr1).claim(amount1, proof1, false);
     
     // Check state after claim
-    expect(await airdropClaim.hasClaimed(addr1.address)).to.be.true;
+    expect(await airdropClaim.hasClaimed(addr1.address, amount1)).to.be.true;
     expect(await token.balanceOf(addr1.address)).to.equal(initialBalance + amount1);
   });
   
@@ -75,7 +75,7 @@ describe("AirdropClaim", function () {
     
     // Try to claim again
     await expect(
-      airdropClaim.connect(addr1).claim(amount1, proof1)
+      airdropClaim.connect(addr1).claim(amount1, proof1, false)
     ).to.be.revertedWith("Airdrop: Already claimed");
   });
   
@@ -86,7 +86,7 @@ describe("AirdropClaim", function () {
     
     // Try to claim with wrong amount
     await expect(
-      airdropClaim.connect(addr2).claim(amount1, proof2)
+      airdropClaim.connect(addr2).claim(amount1, proof2, false)
     ).to.be.revertedWith("Airdrop: Invalid proof");
   });
   
@@ -96,7 +96,7 @@ describe("AirdropClaim", function () {
     const proof1 = merkleTree.getProof(index1);
     
     await expect(
-      airdropClaim.connect(addr3).claim(amount1, proof1)
+      airdropClaim.connect(addr3).claim(amount1, proof1, false)
     ).to.be.revertedWith("Airdrop: Invalid proof");
   });
   
@@ -119,6 +119,6 @@ describe("AirdropClaim", function () {
   it("should prevent non-owner from recovering funds", async function () {
     await expect(
       airdropClaim.connect(addr1).recoverFunds(await token.getAddress())
-    ).to.be.revertedWithCustomError(airdropClaim, "OwnableUnauthorizedAccount");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 }); 

@@ -47,6 +47,10 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
         token = _token;
         merkleRoot = _merkleRoot;
 
+        // Todo:
+        // - vesting create: add "connect wallet" error
+        // - vesting detail view: anyone can release, but the beneficiary is fixed - change that
+        
         // Check if token contract supports ERC165
         if (ERC165Checker.supportsERC165(token)) {
             // Todo: Check if all LSP7 versions have the same transfer function signature
