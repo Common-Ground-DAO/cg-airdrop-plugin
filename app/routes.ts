@@ -15,6 +15,5 @@ export default [
     route("api/airdrop/delete", "routes/api.airdrop.delete.tsx"),
     route("api/vesting/create", "routes/api.vesting.create.tsx"),
     route("api/vesting/list", "routes/api.vesting.list.tsx"),
-    route("api/vesting/details", "routes/api.vesting.details.tsx"),
     route("api/vesting/delete", "routes/api.vesting.delete.tsx"),
 ] satisfies RouteConfig;

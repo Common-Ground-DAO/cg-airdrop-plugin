@@ -1,5 +1,5 @@
-import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/cgDataUtils';
-import { prisma } from '~/lib/db';
+import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/.server/cgDataUtils';
+import { prisma } from '~/lib/.server/db';
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/;
 

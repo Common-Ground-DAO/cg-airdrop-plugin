@@ -1,5 +1,5 @@
-import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/cgDataUtils';
-import { prisma } from '~/lib/db';
+import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/.server/cgDataUtils';
+import { prisma } from '~/lib/.server/db';
 
 // API-only route - handles POST requests to create airdrops
 export async function action({ request }: { request: Request }) {

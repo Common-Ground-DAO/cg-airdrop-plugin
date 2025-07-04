@@ -1,4 +1,4 @@
-import { prisma } from '~/lib/db';
+import { prisma } from '~/lib/.server/db';
 import type { Route } from './+types/api.airdrop.details';
 
 // API-only route - handles POST requests to create airdrops

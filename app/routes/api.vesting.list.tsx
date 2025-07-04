@@ -1,4 +1,4 @@
-import { prisma } from '~/lib/db';
+import { prisma } from '~/lib/.server/db';
 
 // API-only route - handles POST requests to create airdrops
 export async function action({ request }: { request: Request }) {
