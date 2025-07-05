@@ -18,8 +18,6 @@ app/contracts
 
 # Prisma
 generated/prisma
-prisma/dev.db
-prisma/dev.db-journal
 
 # env
 *.local
