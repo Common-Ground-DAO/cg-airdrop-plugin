@@ -14,9 +14,10 @@
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "hardhat:node": "npx hardhat node --config contracts/hardhat.config.cjs",
-    "hardhat:compile": "npx hardhat compile --config contracts/hardhat.config.cjs",
+    "hardhat:compile": "npx hardhat clean --config contracts/hardhat.config.cjs && npx hardhat compile --force --config contracts/hardhat.config.cjs",
     "hardhat:test": "npx hardhat test --config contracts/hardhat.config.cjs",
-    "hardhat:deploy": "npx hardhat run --config contracts/hardhat.config.cjs contracts/scripts/deploy-mocks.ts --network localhost"
+    "hardhat:deploy": "npx hardhat run --config contracts/hardhat.config.cjs contracts/scripts/deploy-mocks.ts --network localhost",
+    "hardhat:clean": "npx hardhat clean --config contracts/hardhat.config.cjs"
   },
   "dependencies": {
     "@common-ground-dao/cg-plugin-lib": "^0.9.13",

@@ -6,7 +6,7 @@ require("@typechain/hardhat");
 module.exports = {
   solidity: "0.8.20",
   typechain: {
-    outDir: "typechain",
+    outDir: "../app/contracts",
     target: "ethers-v6",
     alwaysGenerateOverloads: false,
     dontOverrideCompile: false
