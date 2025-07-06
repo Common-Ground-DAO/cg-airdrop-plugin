@@ -1,4 +1,5 @@
 import { createCookieSessionStorage } from "react-router";
+import env from "./lib/.server/env";
 
 type SessionData = {
   userId: string;
@@ -23,9 +24,9 @@ const { getSession, commitSession, destroySession } =
         // expires: new Date(Date.now() + 60_000),
         httpOnly: true,
         maxAge: 21600, // 6 hours
-        path: import.meta.env.DEV ? "/" : "/cg-airdrop-plugin",
+        path: env.VITE_URL_PREFIX,
         sameSite: "lax",
-        secrets: [process.env.COOKIE_SECRET!],
+        secrets: [env.COOKIE_SECRET],
         secure: true,
       },
     }

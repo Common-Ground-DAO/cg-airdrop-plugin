@@ -16,7 +16,7 @@ export function CgPluginLibProvider({ children }: { children: React.ReactNode })
             promiseRef.current = (async () => {
                 const { CgPluginLib } = await import("@common-ground-dao/cg-plugin-lib");
                 if (!iframeUid) throw new Error("No iframeUid found");
-                const cgPluginLib = await CgPluginLib.initialize(iframeUid, '/api/sign', import.meta.env.VITE_PLUGIN_PUBLIC_KEY);
+                const cgPluginLib = await CgPluginLib.initialize(iframeUid, `${import.meta.env.BASE_URL}api/sign`, import.meta.env.VITE_PLUGIN_PUBLIC_KEY);
                 setCgPluginLib(cgPluginLib);
             })().catch((error) => {
                 console.error(error);

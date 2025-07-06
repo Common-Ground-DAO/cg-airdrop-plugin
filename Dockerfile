@@ -24,5 +24,7 @@ COPY --from=build-env /app/prisma /app/prisma
 COPY --from=build-env /app/generated /app/generated
 WORKDIR /app
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY .env /app/.env
+COPY docker.env.local /app/.env.local
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

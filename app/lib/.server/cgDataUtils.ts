@@ -5,9 +5,10 @@ import {
   type CommunityInfoResponsePayload,
   type PluginResponseInner
 } from '@common-ground-dao/cg-plugin-lib-host';
+import env from "./env";
 
-const privateKey = process.env.PLUGIN_PRIVATE_KEY;
-const publicKey = process.env.VITE_PLUGIN_PUBLIC_KEY;
+const privateKey = env.PLUGIN_PRIVATE_KEY;
+const publicKey = env.VITE_PLUGIN_PUBLIC_KEY;
 let _pluginLib: Promise<CgPluginLibHost> | null = null;
 
 function getPluginLib() {

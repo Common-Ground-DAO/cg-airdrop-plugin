@@ -56,6 +56,15 @@ To use a local hardhat node for testing with smart contracts (optional):
 - add the local HardHat chain to your local wallet plugin (Metamask, Rabby, etc.)
   - You can simply do that by connecting your wallet and selecting HardHat in the chain dropdown
 
+## Docker setup
+
+- Change into the project directory
+- Copy docker.env.local.example to docker.env.local
+- There, update the plugin public and private key, and other changes according to your needs
+- Now, run `docker build -t airdrop .`
+- Run `docker run --rm --name airdrop -p 3000:3000 airdrop`
+- You can now add the plugin for testing with `http://localhost:3000/`
+
 ## Available npm Scripts
 
 ### Development
