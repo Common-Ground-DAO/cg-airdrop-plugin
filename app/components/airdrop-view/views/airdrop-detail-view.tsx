@@ -113,7 +113,7 @@ export default function AirdropDetailView({
     address: airdrop.airdropAddress as `0x${string}`,
     abi: airdropAbi || [],
     functionName: "hasClaimed",
-    args: [address!],
+    args: [address!, BigInt(ownAirdropItems[0]?.amount || "0")],
   });
 
   const [transferAbi, transferArgs] =  useMemo(() => {
@@ -166,12 +166,21 @@ export default function AirdropDetailView({
     if (proofIndex !== undefined) {
       const proof = merkleTree.getProof(proofIndex);
       console.log("Claiming amount: ", amount, " with proof: ", proof);
+      if (tokenData.type === "erc20") {
       writeContract({
         address: airdrop.airdropAddress as `0x${string}`,
         abi: airdropAbi || [],
-        functionName: "claim",
-        args: [amount, proof as `0x${string}`[], true],
-      });
+          functionName: "claimERC20",
+          args: [amount, proof as `0x${string}`[]],
+        });
+      } else if (tokenData.type === "lsp7") {
+        writeContract({
+          address: airdrop.airdropAddress as `0x${string}`,
+          abi: airdropAbi || [],
+          functionName: "claimLSP7",
+          args: [amount, proof as `0x${string}`[], true],
+        });
+      }
     }
   }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract]);
 

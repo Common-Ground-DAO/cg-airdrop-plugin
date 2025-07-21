@@ -61,7 +61,7 @@ describe("AirdropClaim", function () {
     const initialBalance = await token.balanceOf(addr1.address);
     
     // Claim tokens
-    await airdropClaim.connect(addr1).claim(amount1, proof1, false);
+    await airdropClaim.connect(addr1).claimERC20(amount1, proof1);
     
     // Check state after claim
     expect(await airdropClaim.hasClaimed(addr1.address, amount1)).to.be.true;
@@ -75,8 +75,8 @@ describe("AirdropClaim", function () {
     
     // Try to claim again
     await expect(
-      airdropClaim.connect(addr1).claim(amount1, proof1, false)
-    ).to.be.revertedWith("Airdrop: Already claimed");
+      airdropClaim.connect(addr1).claimERC20(amount1, proof1)
+    ).to.be.revertedWith("Already claimed");
   });
   
   it("should prevent claiming with invalid proof", async function () {
@@ -86,8 +86,8 @@ describe("AirdropClaim", function () {
     
     // Try to claim with wrong amount
     await expect(
-      airdropClaim.connect(addr2).claim(amount1, proof2, false)
-    ).to.be.revertedWith("Airdrop: Invalid proof");
+      airdropClaim.connect(addr2).claimERC20(amount1, proof2)
+    ).to.be.revertedWith("Invalid proof");
   });
   
   it("should prevent non-eligible address from claiming", async function () {
@@ -96,8 +96,8 @@ describe("AirdropClaim", function () {
     const proof1 = merkleTree.getProof(index1);
     
     await expect(
-      airdropClaim.connect(addr3).claim(amount1, proof1, false)
-    ).to.be.revertedWith("Airdrop: Invalid proof");
+      airdropClaim.connect(addr3).claimERC20(amount1, proof1)
+    ).to.be.revertedWith("Invalid proof");
   });
   
   it("should allow owner to recover funds", async function () {
@@ -109,7 +109,7 @@ describe("AirdropClaim", function () {
     const contractBalance = await token.balanceOf(await airdropClaim.getAddress());
     
     // Recover funds
-    await airdropClaim.recoverFunds(await token.getAddress());
+    await airdropClaim.recoverERC20(await token.getAddress());
     
     // Check balances
     expect(await token.balanceOf(owner.address)).to.equal(initialBalance + contractBalance);
@@ -118,7 +118,7 @@ describe("AirdropClaim", function () {
   
   it("should prevent non-owner from recovering funds", async function () {
     await expect(
-      airdropClaim.connect(addr1).recoverFunds(await token.getAddress())
+      airdropClaim.connect(addr1).recoverERC20(await token.getAddress())
     ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 }); 

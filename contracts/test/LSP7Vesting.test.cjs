@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 
-describe("CgVesting", function () {
+describe("LSP7Vesting", function () {
   let vesting;
   let token;
   let owner;
@@ -24,8 +24,8 @@ describe("CgVesting", function () {
     await token.waitForDeployment();
     // Deploy vesting contract
     startTimestamp = baseTime + 10; // 10 seconds in the future
-    const CgVesting = await ethers.getContractFactory("CgVesting");
-    vesting = await CgVesting.deploy(beneficiary.address, startTimestamp, duration);
+    const LSP7Vesting = await ethers.getContractFactory("LSP7Vesting");
+    vesting = await LSP7Vesting.deploy(beneficiary.address, startTimestamp, duration);
     await vesting.waitForDeployment();
     // Fund the vesting contract
     await token.mint(await vesting.getAddress(), amount);

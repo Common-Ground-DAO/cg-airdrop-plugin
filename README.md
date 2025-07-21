@@ -26,7 +26,7 @@ You can use your own community to run and test this plugin locally. You can also
 
 Contracts available in `contracts/contracts/`:
 - **AirdropClaim.sol**: Main contract for token distribution using merkle proofs (ERC20 & LSP7 compatible)
-- **CgVesting.sol**: Vesting contract for time-based token release (ERC20 & LSP7 compatible)
+- **LSP7Vesting.sol**: Vesting contract for time-based token release (ERC20 & LSP7 compatible)
 - **MockToken.sol**: ERC20 token for testing
 - **MockLSP7.sol**: LUKSO LSP7 token for testing
 

@@ -22,11 +22,11 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // The merkle root of the merkle tree containing the airdrop distribution
-    bytes32 public merkleRoot;
+    bytes32 public immutable merkleRoot;
 
     // The token being distributed
-    address public token;
-    bool public isLSP7;
+    address public immutable token;
+    bool public immutable isLSP7;
     uint256 public totalClaimed;
 
     // Mapping of addresses that have claimed their tokens
@@ -34,7 +34,6 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
 
     // Events
     event AirdropClaimed(address indexed account, uint256 amount);
-    event FundsRecovered(address indexed token, uint256 amount);
 
     /**
      * @dev Constructor to initialize the contract with the token address and merkle root
@@ -42,97 +41,62 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
      * @param _merkleRoot The merkle root of the airdrop distribution
      */
     constructor(address _token, bytes32 _merkleRoot) Ownable() {
-        // Todo: Check if Ownable is compatible with deployment through UP extension
-
         token = _token;
         merkleRoot = _merkleRoot;
-
-        // Todo:
-        // - vesting create: add "connect wallet" error
-        // - vesting detail view: anyone can release, but the beneficiary is fixed - change that
-        
-        // Check if token contract supports ERC165
-        if (ERC165Checker.supportsERC165(token)) {
-            // Todo: Check if all LSP7 versions have the same transfer function signature
-            isLSP7 =
-                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7) ||
-                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_12_0) ||
-                ERC165Checker.supportsInterface(token, _INTERFACEID_LSP7_V0_14_0);
-        }
-        if (!isLSP7) {
-            // Token does not support ERC165, proceed with simple heuristic ERC20 check
-            uint256 codeSize;
-            assembly {
-                codeSize := extcodesize(_token)
-            }
-
-            if (codeSize > 0) {
-                bool hasTotalSupply;
-                (hasTotalSupply, ) = token.staticcall(abi.encodeWithSignature("totalSupply()"));
-
-                bool hasBalanceOf;
-                (hasBalanceOf, ) = token.staticcall(abi.encodeWithSignature("balanceOf(address)", address(this)));
-
-                if (!hasTotalSupply || !hasBalanceOf) {
-                    revert("Neither ERC20 nor LSP7 token");
-                }
-            } else {
-                revert("Address is not a contract");
-            }
-        }
+        isLSP7 = checkLSP7(token);
     }
 
-    /**
-     * @dev Claim tokens from the airdrop
-     * @param amount The amount of tokens to claim
-     * @param merkleProof The merkle proof verifying the claim
-     */
-    function claim(uint256 amount, bytes32[] memory merkleProof, bool forceLSP7Transfer) external nonReentrant {
-        // Ensure address has not already claimed
-        require(!hasClaimed[msg.sender][amount], "Airdrop: Already claimed");
-
-        // Verify the merkle proof
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, amount))));
-        require(MerkleProof.verify(merkleProof, merkleRoot, leaf), "Airdrop: Invalid proof");
-
-        // Mark as claimed
-        hasClaimed[msg.sender][amount] = true;
-        totalClaimed += amount;
-
-        // Transfer the tokens
-        if (isLSP7) {
-            ILSP7DigitalAsset(token).transfer(address(this), msg.sender, amount, forceLSP7Transfer, "");
-        } else {
-            IERC20(token).safeTransfer(msg.sender, amount);
+    function checkLSP7(address target) internal view returns (bool) {
+        if (!ERC165Checker.supportsERC165(target)) {
+            return false;
         }
+        return (
+            ERC165Checker.supportsInterface(target, _INTERFACEID_LSP7) ||
+            ERC165Checker.supportsInterface(target, _INTERFACEID_LSP7_V0_12_0) ||
+            ERC165Checker.supportsInterface(target, _INTERFACEID_LSP7_V0_14_0)
+        );
+    }
 
-        // Emit claim event
+    receive() external payable {
+        revert("This contract does not accept ETH");
+    }
+
+    fallback() external payable {
+        revert("This contract does not accept ETH");
+    }
+
+    function handleClaim(uint256 amount, bytes32[] memory merkleProof) internal {
+        require(hasClaimed[msg.sender][amount] == false, "Already claimed");
+        hasClaimed[msg.sender][amount] = true;
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, amount))));
+        require(MerkleProof.verify(merkleProof, merkleRoot, leaf), "Invalid proof");
+        totalClaimed += amount;
         emit AirdropClaimed(msg.sender, amount);
     }
 
-    /**
-     * @dev Recover any ERC20 or LSP7 tokens sent to the contract
-     * @param recoverToken The token contract address to recover
-     */
-    function recoverFunds(address recoverToken) external onlyOwner nonReentrant {
-        // balanceOf works for both ERC20 and LSP7 tokens
-        uint256 amount = IERC20(recoverToken).balanceOf(address(this));
-        require(amount > 0, "Airdrop: No tokens to recover");
+    function claimLSP7(uint256 amount, bytes32[] memory merkleProof, bool force) external nonReentrant {
+        handleClaim(amount, merkleProof);
+        ILSP7DigitalAsset(token).transfer(address(this), msg.sender, amount, force, "");
+    }
 
-        bool recoverLSP7 = false;
-        if (ERC165Checker.supportsERC165(recoverToken)) {
-            recoverLSP7 =
-                ERC165Checker.supportsInterface(recoverToken, _INTERFACEID_LSP7) ||
-                ERC165Checker.supportsInterface(recoverToken, _INTERFACEID_LSP7_V0_12_0) ||
-                ERC165Checker.supportsInterface(recoverToken, _INTERFACEID_LSP7_V0_14_0);
-        }
-        
-        // Transfer the tokens
-        if (recoverLSP7) {
-            ILSP7DigitalAsset(recoverToken).transfer(address(this), owner(), amount, true, "");
-        } else {
-            IERC20(recoverToken).safeTransfer(owner(), amount);
-        }
-        emit FundsRecovered(address(recoverToken), amount);
+    function claimERC20(uint256 amount, bytes32[] memory merkleProof) external nonReentrant {
+        handleClaim(amount, merkleProof);
+        IERC20(token).safeTransfer(msg.sender, amount);
+    }
+
+    function recoverLSP7(address recoverToken) external onlyOwner nonReentrant {
+        uint256 balance = ILSP7DigitalAsset(recoverToken).balanceOf(address(this));
+        require(balance > 0, "No tokens to recover");
+        ILSP7DigitalAsset(recoverToken).transfer(address(this), owner(), balance, true, "");
+    }
+
+    function recoverERC20(address recoverToken) external onlyOwner nonReentrant {
+        uint256 balance = IERC20(recoverToken).balanceOf(address(this));
+        require(balance > 0, "No tokens to recover");
+        IERC20(recoverToken).safeTransfer(owner(), balance);
+    }
+
+    function renounceOwnership() public view override onlyOwner {
+        revert("Ownership cannot be renounced");
     }
 } 
