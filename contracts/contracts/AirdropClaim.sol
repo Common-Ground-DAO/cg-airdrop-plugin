@@ -75,11 +75,13 @@ contract AirdropClaim is Ownable, ReentrancyGuard {
     }
 
     function claimLSP7(uint256 amount, bytes32[] memory merkleProof, bool force) external nonReentrant {
+        require(isLSP7, "Token is not an LSP7 token");
         handleClaim(amount, merkleProof);
         ILSP7DigitalAsset(token).transfer(address(this), msg.sender, amount, force, "");
     }
 
     function claimERC20(uint256 amount, bytes32[] memory merkleProof) external nonReentrant {
+        require(!isLSP7, "Token is not an ERC20 token");
         handleClaim(amount, merkleProof);
         IERC20(token).safeTransfer(msg.sender, amount);
     }
