@@ -45,7 +45,7 @@ PLUGIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n---data---\n-----END PRIVATE KE
 COOKIE_SECRET=some_random_value
 ```
 
-- Be sure your node version is at least >= 24 (try something like (nvm)[https://github.com/nvm-sh/nvm] to manage your node versions)
+- Be sure your node version is at least >= 24 (try something like [nvm](https://github.com/nvm-sh/nvm) to manage your node versions)
 - run `npm install`
 - run `npm run hardhat:compile`
 - run `npm run prisma:migrate`
