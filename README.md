@@ -47,6 +47,7 @@ COOKIE_SECRET=some_random_value
 
 - run `npm install`
 - run `npm run hardhat:compile`
+- run `npm run prisma:migrate`
 - run `npm run dev`
 - the plugin should now load when visiting it in your community
 

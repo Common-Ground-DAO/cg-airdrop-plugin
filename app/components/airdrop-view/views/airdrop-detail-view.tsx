@@ -167,9 +167,9 @@ export default function AirdropDetailView({
       const proof = merkleTree.getProof(proofIndex);
       console.log("Claiming amount: ", amount, " with proof: ", proof);
       if (tokenData.type === "erc20") {
-      writeContract({
-        address: airdrop.airdropAddress as `0x${string}`,
-        abi: airdropAbi || [],
+        writeContract({
+          address: airdrop.airdropAddress as `0x${string}`,
+          abi: airdropAbi || [],
           functionName: "claimERC20",
           args: [amount, proof as `0x${string}`[]],
         });
@@ -182,7 +182,7 @@ export default function AirdropDetailView({
         });
       }
     }
-  }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract]);
+  }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract, tokenData.type]);
 
   const fundAirdropContract = useCallback(() => {
     if (!transferAbi || airdrop.tokenAddress === undefined) return;
