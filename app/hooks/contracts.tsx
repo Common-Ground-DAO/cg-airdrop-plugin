@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { erc20Abi } from "viem";
-import type { AirdropClaim__factory, LSP7Vesting__factory } from "~/contracts";
+import type { AirdropClaim__factory, CgVesting__factory, VestingWallet__factory } from "~/contracts";
 import type { lsp7DigitalAssetAbi } from "@lukso/lsp7-contracts/abi";
 import type { lsp4DigitalAssetMetadataAbi } from "@lukso/lsp4-contracts/abi";
 import { useChains } from "wagmi";
@@ -42,18 +42,41 @@ export function useAirdropAbi() {
 }
 
 // Vesting
-let _vestingFactory: typeof LSP7Vesting__factory | null = null;
+let _vestingFactory: typeof CgVesting__factory | null = null;
 export function useVestingContractFactory() {
-    const [factory, setFactory] = useState<typeof LSP7Vesting__factory | null>(() => _vestingFactory);
+    const [factory, setFactory] = useState<typeof CgVesting__factory | null>(() => _vestingFactory);
     
     useEffect(() => {
         let mounted = true;
         if (factory) return;
         (async () => {
-            const { LSP7Vesting__factory } = await import("~/contracts");
-            _vestingFactory = LSP7Vesting__factory;
+            const { CgVesting__factory } = await import("~/contracts");
+            _vestingFactory = CgVesting__factory;
             if (mounted) {
-                setFactory(() => LSP7Vesting__factory);
+                setFactory(() => CgVesting__factory);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    return factory;
+}
+
+// Openzeppelin Vesting
+let _openzeppelinVestingFactory: typeof VestingWallet__factory | null = null;
+export function useOpenzeppelinVestingContractFactory() {
+    const [factory, setFactory] = useState<typeof VestingWallet__factory | null>(() => _openzeppelinVestingFactory);
+    
+    useEffect(() => {
+        let mounted = true;
+        if (factory) return;
+        (async () => {
+            const { VestingWallet__factory } = await import("~/contracts");
+            _openzeppelinVestingFactory = VestingWallet__factory;
+            if (mounted) {
+                setFactory(() => VestingWallet__factory);
             }
         })();
         return () => {
@@ -66,7 +89,7 @@ export function useVestingContractFactory() {
 
 export function useVestingAbi() {
     const vestingContractFactory = useVestingContractFactory();
-    const [abi, setAbi] = useState<typeof LSP7Vesting__factory["abi"] | null>(vestingContractFactory?.abi || null);
+    const [abi, setAbi] = useState<typeof CgVesting__factory["abi"] | null>(vestingContractFactory?.abi || null);
 
     useEffect(() => {
         if (!abi && vestingContractFactory) {

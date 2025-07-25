@@ -5,6 +5,8 @@ import { useCgData } from "~/context/cg_data";
 import { useTokenData, useVestingContractFactory } from "~/hooks";
 import type { TokenData } from "~/hooks/token-data";
 import TokenMetadataDisplay from "../token-metadata-display";
+import { useOpenzeppelinVestingContractFactory } from "~/hooks/contracts";
+import type { CgVesting__factory, VestingWallet__factory } from "~/contracts";
 
 /**
  * The vesting contract can actually handle multiple tokens,
@@ -31,7 +33,8 @@ export default function VestingCreate() {
   const [tokenAddress, setTokenAddress] = useState<`0x${string}` | undefined>(undefined);
   const [startTime, setStartTime] = useState<string | undefined>(undefined);
   const [endTime, setEndTime] = useState<string | undefined>(undefined);
-  const factory = useVestingContractFactory();
+  const customVestingFactory = useVestingContractFactory();
+  const openzeppelinVestingFactory = useOpenzeppelinVestingContractFactory();
   const { communityInfo, userInfo, __communityInfoRawResponse, __userInfoRawResponse } = useCgData();
   const fetcher = useFetcher();
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +107,7 @@ export default function VestingCreate() {
     else if (!communityInfo || !userInfo) {
       setError("Invalid community or user");
     }
-    else if (!factory) {
+    else if (!customVestingFactory || !openzeppelinVestingFactory) {
       setError("Invalid contract factory");
     }
     else if (!name) {
@@ -132,9 +135,14 @@ export default function VestingCreate() {
         tokenData: old?.tokenData,
       }));
 
+      let vestingFactory: typeof VestingWallet__factory | typeof CgVesting__factory = openzeppelinVestingFactory;
+      if (tokenData.type === "lsp7") {
+        vestingFactory = customVestingFactory;
+      }
+
       deployContract({
-        abi: factory.abi,
-        bytecode: factory.bytecode,
+        abi: vestingFactory.abi,
+        bytecode: vestingFactory.bytecode,
         args: [beneficiaryAddress!, BigInt(startTimeSeconds), BigInt(durationSeconds)],
         chainId: chain?.id,
       }, {
@@ -144,7 +152,7 @@ export default function VestingCreate() {
         },
       });
     }
-  }, [communityInfo, userInfo, deployContract, factory, chain?.id, beneficiaryAddress, startTime, endTime, tokenAddress]);
+  }, [communityInfo, userInfo, deployContract, customVestingFactory, openzeppelinVestingFactory, chain?.id, beneficiaryAddress, startTime, endTime, tokenAddress]);
 
   // Submit to database when we have the contract address
   const handleSubmitToDatabase = useCallback(async (contractAddress: string) => {
