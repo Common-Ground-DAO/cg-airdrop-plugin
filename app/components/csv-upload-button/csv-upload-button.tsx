@@ -61,7 +61,7 @@ export default function CsvUploadButton({ text, icon, className, disabled, onUpl
 
   return <div className="flex flex-col items-center cursor-pointer">
     <button
-      className={`btn btn-primary pointer-events-none relative ${className || ""}`}
+      className={`btn btn-primary pointer-events-none relative ${!(loading || disabled) ? "cursor-pointer" : ''} ${className || ""}`}
       disabled={loading || disabled}
     >
       {text}

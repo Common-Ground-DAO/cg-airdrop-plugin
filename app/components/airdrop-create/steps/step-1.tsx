@@ -85,7 +85,7 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep, validAddres
         </>}
       </div>
     </div>
-    <div className="flex flex-col items-center gap-2 pt-2 mt-auto mb-2 max-w-full">
+    <div className="flex flex-col items-center gap-2 pt-2 mt-auto mb-4 max-w-full">
       <button
         className="btn btn-primary"
         onClick={() => setStep(1)}

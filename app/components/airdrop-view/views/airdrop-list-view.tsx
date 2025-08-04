@@ -13,8 +13,8 @@ export default function AirdropListView({
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
       <h1 className="text-xl font-bold p-4 pb-0">Airdrops</h1>
-      <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
-        {!!airdrops && airdrops.length > 0 && airdrops.map((airdrop) => (
+      {!!airdrops && airdrops.length > 0 && <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
+        {airdrops.map((airdrop) => (
           <NavLink
             key={airdrop.id}
             to={`/airdrops/${airdrop.id}`}
@@ -27,9 +27,9 @@ export default function AirdropListView({
             <IoChevronForward className="ml-auto" />
           </NavLink>
         ))}
-      </div>
-      {!!airdrops && airdrops.length === 0 && <div>No airdrops found for this community :(</div>}
-      {!airdrops && <div>Loading...</div>}
+      </div>}
+      {!!airdrops && airdrops.length === 0 && <div className="flex flex-col items-center justify-center w-full">No airdrops found for this community :(</div>}
+      {!airdrops && <div className="flex flex-col items-center justify-center w-full">Loading...</div>}
     </div>
   );
 }

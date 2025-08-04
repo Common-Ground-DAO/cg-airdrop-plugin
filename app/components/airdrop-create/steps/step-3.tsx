@@ -231,7 +231,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
         )}
       </div>
     </div>
-    <div className="flex flex-col items-center gap-2 pt-4 mt-auto mb-2">
+    <div className="flex flex-col items-center gap-2 pt-4 mt-auto mb-4">
       {transactionConfirmations !== undefined && (
         <div className="text-xs">
           Transaction confirmations: {transactionConfirmations.toString()}

@@ -59,7 +59,7 @@ const AirdropSetupStepTwo = ({ csvResult, setCsvResult, setStep, airdropData }: 
       </div>
     )}
 
-    <div className="flex flex-col items-center gap-2 mt-auto mb-2">
+    <div className="flex flex-col items-center gap-2 mt-auto mb-4">
       <div className="flex flex-row gap-2">
         <button
           className="btn btn-primary"

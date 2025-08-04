@@ -43,7 +43,7 @@ export default function Menu() {
             </li>
         </ul>
         {isAdmin && <ul className="menu bg-base-100 p-2 rounded-box self-start gap-1 ml-4 w-[calc(100%-1rem)] shadow-lg">
-            <li><div className="divider mt-2 mb-1">Admin</div></li>
+            <div className="divider mt-2 mb-1 px-3 py-1.5">Admin</div>
             <li>
                 <NavLink
                     to="/airdrops/create"

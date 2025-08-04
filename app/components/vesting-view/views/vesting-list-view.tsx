@@ -9,12 +9,12 @@ export interface VestingListViewProps {
 
 export default function VestingListView({ vestings }: VestingListViewProps) {
   const getChainNameById = useGetChainNameById();
-  
+
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
       <h1 className="text-xl font-bold p-4 pb-0">Vestings</h1>
-      <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
-        {!!vestings && vestings.length > 0 && vestings.map((vesting) => (
+      {!!vestings && vestings.length > 0 && <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
+        {vestings.map((vesting) => (
           <NavLink
             key={vesting.id}
             to={`/vestings/${vesting.id}`}
@@ -27,9 +27,9 @@ export default function VestingListView({ vestings }: VestingListViewProps) {
             <IoChevronForward className="ml-auto" />
           </NavLink>
         ))}
-      </div>
-      {!!vestings && vestings.length === 0 && <div>No vestings found for this community :(</div>}
-      {!vestings && <div>Loading...</div>}
+      </div>}
+      {!!vestings && vestings.length === 0 && <div className="flex flex-col items-center justify-center w-full">No vestings found for this community :(</div>}
+      {!vestings && <div className="flex flex-col items-center justify-center w-full">Loading...</div>}
     </div>
   );
 }
