@@ -7,7 +7,7 @@ export default function Header() {
   const { communityInfo } = useCgData();
 
   return (
-    <div className="p-4 grid grid-cols-2 gap-2">
+    <div className="p-4 flex gap-2 flex-wrap">
       <div className="flex flex-row items-center justify-start gap-3">
         {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
       </div>

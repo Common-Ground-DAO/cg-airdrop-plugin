@@ -30,6 +30,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./app.css";
 import { CgPluginLibProvider } from "./context/plugin_lib";
 import { CgDataProvider } from "./context/cg_data";
+import { WindowSizeProvider } from "./context/window_size";
 
 const theme = "silk";
 
@@ -127,17 +128,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <CgPluginLibProvider>
-      <CgDataProvider>
-        <WagmiProvider config={config}>
-          <QueryClientProvider client={queryClient}>
-            <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200 p-0 m-0" data-theme={theme}>
-              <Outlet />
-            </div>
-          </QueryClientProvider>
-        </WagmiProvider>
-      </CgDataProvider>
-    </CgPluginLibProvider>
+    <WindowSizeProvider>
+      <CgPluginLibProvider>
+        <CgDataProvider>
+          <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+              <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200 p-0 m-0" data-theme={theme}>
+                <Outlet />
+              </div>
+            </QueryClientProvider>
+          </WagmiProvider>
+        </CgDataProvider>
+      </CgPluginLibProvider>
+    </WindowSizeProvider>
   );
 }
 
