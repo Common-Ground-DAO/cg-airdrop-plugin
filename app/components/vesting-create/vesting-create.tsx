@@ -6,7 +6,7 @@ import { useTokenData, useVestingContractFactory } from "~/hooks";
 import type { TokenData } from "~/hooks/token-data";
 import TokenMetadataDisplay from "../token-metadata-display";
 import { useOpenzeppelinVestingContractFactory } from "~/hooks/contracts";
-import type { CgVesting__factory, VestingWallet__factory } from "~/contracts";
+import type { LSP7Vesting__factory, VestingWallet__factory } from "~/contracts";
 
 /**
  * The vesting contract can actually handle multiple tokens,
@@ -135,7 +135,7 @@ export default function VestingCreate() {
         tokenData: old?.tokenData,
       }));
 
-      let vestingFactory: typeof VestingWallet__factory | typeof CgVesting__factory = openzeppelinVestingFactory;
+      let vestingFactory: typeof VestingWallet__factory | typeof LSP7Vesting__factory = openzeppelinVestingFactory;
       if (tokenData.type === "lsp7") {
         vestingFactory = customVestingFactory;
       }

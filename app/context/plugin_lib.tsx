@@ -24,7 +24,7 @@ export function CgPluginLibProvider({ children }: { children: React.ReactNode })
                 promiseRef.current = null;
             });
         }
-    }, [cgPluginLib]);
+    }, [cgPluginLib, iframeUid]);
 
     return <CgPluginLibContext.Provider value={cgPluginLib}>{children}</CgPluginLibContext.Provider>;
 }
