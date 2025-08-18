@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useFetcher, useNavigate } from "react-router";
+import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
 import FormatUnits from "../../format-units/format-units";
@@ -33,6 +33,7 @@ export default function AirdropDetailView({
   const airdropAbi = useAirdropAbi();
   const erc20Abi = useErc20Abi();
   const lsp7Abi = useLsp7Abi();
+  const submit = useSubmit();
   const {
     writeContract,
     isPending: isPendingWriteContract,
@@ -225,6 +226,15 @@ export default function AirdropDetailView({
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
             ><IoTrashOutline /><span>Delete Airdrop</span></button>
+            <button
+              className="btn btn-xs gap-1"
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("type", "airdrop");
+                formData.append("id", airdrop.id.toString());
+                submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
+              }}
+            ><IoTrashOutline /><span>Verify Contract</span></button>
           </div>}
         </nav>
         {isLoading && !errors.length && (

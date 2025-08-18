@@ -14,7 +14,7 @@
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "hardhat:node": "npx hardhat node --config contracts/hardhat.config.cjs",
-    "hardhat:compile": "npx hardhat clean --config contracts/hardhat.config.cjs && npx hardhat compile --force --config contracts/hardhat.config.cjs",
+    "hardhat:compile": "npx hardhat clean --config contracts/hardhat.config.cjs && npx hardhat compile --force --config contracts/hardhat.config.cjs && npx hardhat run --config contracts/hardhat.config.cjs contracts/scripts/generate-verification-data.ts",
     "hardhat:test": "npx hardhat test --config contracts/hardhat.config.cjs",
     "hardhat:deploy": "npx hardhat run --config contracts/hardhat.config.cjs contracts/scripts/deploy-mocks.ts --network localhost",
     "hardhat:clean": "npx hardhat clean --config contracts/hardhat.config.cjs"
@@ -33,6 +33,7 @@
     "csv-parse": "^5.6.0",
     "dotenv": "^17.0.1",
     "ethers": "^6.14.1",
+    "form-data": "^4.0.4",
     "isbot": "^5.1.27",
     "prisma": "^6.8.2",
     "react": "^19.1.0",

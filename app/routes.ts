@@ -16,4 +16,5 @@ export default [
     route("api/vesting/create", "routes/api.vesting.create.tsx"),
     route("api/vesting/list", "routes/api.vesting.list.tsx"),
     route("api/vesting/delete", "routes/api.vesting.delete.tsx"),
+    route("api/verify-contract", "routes/api.verify-contract.tsx"),
 ] satisfies RouteConfig;

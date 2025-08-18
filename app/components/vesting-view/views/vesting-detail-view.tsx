@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import type { Vesting } from "generated/prisma";
 import { useErc20Abi, useTokenData, useVestingAbi } from "~/hooks";
@@ -24,6 +24,7 @@ export default function VestingDetailView({
   const erc20Abi = useErc20Abi();
   const { address } = useAccount();
   const navigate = useNavigate();
+  const submit = useSubmit();
   const tokenData = useTokenData(vesting.tokenAddress as `0x${string}`, vesting.chainId);
   const {
     writeContract,
@@ -154,6 +155,15 @@ export default function VestingDetailView({
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-vesting-modal") as any)?.showModal()}
             ><IoTrashOutline /><span>Delete Vesting</span></button>
+            <button
+              className="btn btn-xs gap-1"
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("type", "vesting");
+                formData.append("id", vesting.id.toString());
+                submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
+              }}
+            ><IoTrashOutline /><span>Verify Contract</span></button>
           </div>}
         </nav>
         {isLoading && !errors.length && (

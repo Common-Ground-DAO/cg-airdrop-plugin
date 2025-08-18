@@ -24,6 +24,7 @@ import {
   polygon,
   polygonZkEvm,
   scroll,
+  sepolia,
 } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -85,6 +86,7 @@ const config = createConfig({
     polygon,
     polygonZkEvm,
     scroll,
+    sepolia,
   ],
   connectors: [injected()],
   transports: {
@@ -105,6 +107,7 @@ const config = createConfig({
     [polygon.id]: http(),
     [polygonZkEvm.id]: http(),
     [scroll.id]: http(),
+    [sepolia.id]: http(),
   },
 });
 

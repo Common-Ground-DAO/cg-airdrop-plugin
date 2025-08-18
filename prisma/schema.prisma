@@ -24,7 +24,8 @@ model Airdrop {
   chainId          Int
   createdAt        DateTime       @default(now())
   items            AirdropItem[]
-  merkleTree       MerkleTree? 
+  merkleTree       MerkleTree?
+  verification     Json?
 
   @@index(fields: [communityId])
 }
@@ -60,6 +61,7 @@ model Vesting {
   createdAt           DateTime       @default(now())
   startTimeSeconds    Int
   endTimeSeconds      Int
+  verification        Json?
 
   @@index(fields: [beneficiaryAddress])
   @@index(fields: [communityId])

@@ -1,5 +1,6 @@
 import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/.server/cgDataUtils';
 import { prisma } from '~/lib/.server/db';
+import { verifyContract } from '~/lib/.server/verify';
 
 // API-only route - handles POST requests to create airdrops
 export async function action({ request }: { request: Request }) {
@@ -65,6 +66,8 @@ export async function action({ request }: { request: Request }) {
       }
     });
   }
+
+  await verifyContract("airdrop", airdropId);
 
   return ({ airdropId });
 } 
