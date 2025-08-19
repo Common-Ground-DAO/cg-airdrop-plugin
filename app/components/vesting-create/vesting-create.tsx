@@ -184,7 +184,44 @@ export default function VestingCreate() {
     }
   }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse, tokenData.type]);
 
-  const inProgress = isPending || isSuccess || isConfirming || isConfirmed;
+  const inProgress = isPending || isSuccess || isConfirming || isConfirmed || fetcher.state !== "idle";
+
+  const deploymentStatus = useMemo(() => {
+    let progress = 0;
+    let message = "Not started";
+    if (isSuccess) { // tx signed
+      progress += 33.4;
+      message = "Tx signed";
+    }
+    else if (isPending) { // waiting for tx signature
+      progress += 16.7;
+      message = "Waiting for tx signature...";
+    }
+    
+    if (isConfirmed) { // tx confirmed
+      progress += 33.4;
+      message = "Tx confirmed";
+    }
+    else if (isConfirming) { // waiting for tx confirmation
+      progress += 16.7;
+      message = "Waiting for tx confirmation...";
+    }
+
+    if (fetcher.data) { // saved
+      progress += 33.4;
+      message = "Finished";
+    }
+    else if (fetcher.state !== "idle") { // saving
+      progress += 16.7;
+      message = "Saving to database...";
+    }
+
+    if (progress >= 99) {
+      progress = 100;
+    }
+
+    return { progress, message };
+  }, [isSuccess, isPending, isConfirmed, fetcher.data]);
 
   // Effect to handle successful deployment
   useEffect(() => {
@@ -266,6 +303,20 @@ export default function VestingCreate() {
               chainId={vestingData?.chainId}
               tokenAddress={vestingData?.tokenAddress}
             />
+          </div>
+        </div>
+        <div className="w-md max-w-md">
+          <label className="text-sm font-medium text-gray-500">Deployment status</label>
+          <div className="wrap-anywhere">
+            <div className="flex flex-col items-center">
+              <div className="flex flex-row items-center justify-start w-full">
+                {deploymentStatus.message}
+              </div>
+              {deploymentStatus.progress > 0
+                ? <progress value={deploymentStatus.progress} max="100" className="progress progress-primary w-full max-w-full" />
+                : <div className="h-2 w-full" />
+              }
+            </div>
           </div>
         </div>
       </div>

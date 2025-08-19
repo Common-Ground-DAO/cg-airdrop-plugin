@@ -205,7 +205,7 @@ function verifyEtherscan({
   return promiseFormSubmit(form, url);
 }
 
-export async function verifyContract(type: "airdrop" | "vesting", id: number) {
+export async function verifyContract(type: "airdrop" | "vesting", id: number): Promise<{ status: "success" | "error", error?: string, verificationStatus?: VerificationStatus }> {
   let verificationStatus: VerificationStatus = {
     status: "not-started",
     version: 1,
@@ -386,4 +386,6 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number) {
       data: { verification: verificationStatus },
     });
   }
+
+  return { status: "success", verificationStatus };
 }
