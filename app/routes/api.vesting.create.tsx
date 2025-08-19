@@ -17,6 +17,7 @@ export async function action({ request }: { request: Request }) {
   const communityInfoRaw = formData.get("communityInfoRaw") as string;
   const userInfoRaw = formData.get("userInfoRaw") as string;
   const isLSP7 = formData.get("isLSP7") === "true" || formData.get("isLSP7") === "1";
+  const termsLink = formData.get("termsLink") as string || null;
 
   const communityInfo = await validateCommunityData(communityInfoRaw);
   const userInfo = await validateUserData(userInfoRaw);
@@ -65,6 +66,7 @@ export async function action({ request }: { request: Request }) {
       chainId: parseInt(chainId),
       contractAddress,
       isLSP7,
+      termsLink,
     }
   });
 

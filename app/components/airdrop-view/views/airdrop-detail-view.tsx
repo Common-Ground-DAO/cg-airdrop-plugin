@@ -336,6 +336,15 @@ export default function AirdropDetailView({
                         </div>)}
                       </td>
                     </tr>}
+                    {airdrop.termsLink && <tr>
+                      <td>Terms</td>
+                      <td>
+                        <a href={airdrop.termsLink} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+                          <MdArrowOutward className="inline-block mr-1" />
+                          View terms
+                        </a>
+                      </td>
+                    </tr>}
                   </tbody>
                 </table>
               </div>

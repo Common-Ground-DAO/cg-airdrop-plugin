@@ -1,9 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import type { AirdropData } from "../airdrop-create";
 import { TbPlugConnected, TbInfoCircle } from "react-icons/tb";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
-import type { TokenData } from "~/hooks/token-data";
 
 interface StepOneProps {
   airdropData: AirdropData;
@@ -73,6 +72,17 @@ const AirdropSetupStepOne = ({ airdropData, setAirdropData, setStep, validAddres
               onChange={(e) => setAirdropData(old => ({ ...old, tokenAddress: e.target.value as `0x${string}` }))}
             />
             {addressWarning && <p className="text-sm text-orange-400">{addressWarning}</p>}
+          </fieldset>
+          <fieldset className="fieldset w-full">
+            <legend className="fieldset-legend">If terms need to be accepted for claiming, enter the link here</legend>
+            <input
+              type="text"
+              className="input w-[calc(100%-0.5rem)] ml-1"
+              id="termsLink"
+              value={airdropData.termsLink || ''}
+              onChange={(e) => setAirdropData(old => ({ ...old, termsLink: e.target.value }))}
+            />
+            {!!airdropData.termsLink && !airdropData.termsLink.match(/^https?:\/\/[^\/]+\.[^\/]+/) && <p className="text-sm text-orange-400">Please make sure the link starts with https:// and is valid.</p>}
           </fieldset>
           <div className="w-[calc(100%-0.5rem)] ml-1 max-w-[calc(100%-0.5rem)] mt-4">
             <TokenMetadataDisplay

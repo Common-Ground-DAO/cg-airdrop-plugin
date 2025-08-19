@@ -33,6 +33,7 @@ export default function VestingCreate() {
   const [tokenAddress, setTokenAddress] = useState<`0x${string}` | undefined>(undefined);
   const [startTime, setStartTime] = useState<string | undefined>(undefined);
   const [endTime, setEndTime] = useState<string | undefined>(undefined);
+  const [termsLink, setTermsLink] = useState<string | undefined>(undefined);
   const customVestingFactory = useVestingContractFactory();
   const openzeppelinVestingFactory = useOpenzeppelinVestingContractFactory();
   const { communityInfo, userInfo, __communityInfoRawResponse, __userInfoRawResponse } = useCgData();
@@ -133,6 +134,7 @@ export default function VestingCreate() {
         startTimeSeconds,
         endTimeSeconds,
         tokenData: old?.tokenData,
+        termsLink,
       }));
 
       let vestingFactory: typeof VestingWallet__factory | typeof LSP7Vesting__factory = openzeppelinVestingFactory;
@@ -152,7 +154,7 @@ export default function VestingCreate() {
         },
       });
     }
-  }, [communityInfo, userInfo, deployContract, customVestingFactory, openzeppelinVestingFactory, chain?.id, beneficiaryAddress, startTime, endTime, tokenAddress]);
+  }, [communityInfo, userInfo, deployContract, customVestingFactory, openzeppelinVestingFactory, chain?.id, beneficiaryAddress, startTime, endTime, tokenAddress, termsLink]);
 
   // Submit to database when we have the contract address
   const handleSubmitToDatabase = useCallback(async (contractAddress: string) => {
@@ -175,6 +177,7 @@ export default function VestingCreate() {
     formData.append("communityInfoRaw", __communityInfoRawResponse!);
     formData.append("userInfoRaw", __userInfoRawResponse!);
     formData.append("isLSP7", tokenData.type === "lsp7" ? "true" : "false");
+    formData.append("termsLink", termsLink || "");
 
     try {
       await fetcher.submit(formData, { method: "post", action: "/api/vesting/create" });
@@ -182,7 +185,7 @@ export default function VestingCreate() {
       console.error("Error submitting vesting to database", error);
       setError("Error submitting vesting to database");
     }
-  }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse, tokenData.type]);
+  }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse, tokenData.type, termsLink]);
 
   const inProgress = isPending || isSuccess || isConfirming || isConfirmed || fetcher.state !== "idle";
 
@@ -236,7 +239,7 @@ export default function VestingCreate() {
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
       <h1 className="text-xl font-bold p-4 pb-0">Create Vesting</h1>
-      <div className="flex-1 flex flex-col w-full items-center overflow-hidden">
+      <div className="flex-1 flex flex-col w-full items-center overflow-x-hidden overflow-y-auto">
         <div className="w-md max-w-md">
           <fieldset className="fieldset w-full">
             <legend className="fieldset-legend">Display name for this vesting</legend>
@@ -290,6 +293,17 @@ export default function VestingCreate() {
               onChange={(e) => setEndTime(e.target.value)}
             />
           </fieldset>
+          <fieldset className="fieldset w-full">
+            <legend className="fieldset-legend">If terms need to be accepted for claiming, enter the link here</legend>
+            <input
+              type="text"
+              className="input w-[calc(100%-0.5rem)] ml-1"
+              id="termsLink"
+              value={termsLink || ''}
+              onChange={(e) => setTermsLink(e.target.value)}
+            />
+            {!!termsLink && !termsLink.match(/^https?:\/\/[^\/]+\.[^\/]+/) && <p className="text-sm text-orange-400">Please make sure the link starts with https:// and is valid.</p>}
+          </fieldset>
           {error && <div className="collapse collapse-arrow bg-error">
             <input type="checkbox" />
             <div className="collapse-title font-semibold">Error</div>
@@ -297,26 +311,26 @@ export default function VestingCreate() {
               {error}
             </div>  
           </div>}
+          <div className="w-md max-w-md">
+            <label className="text-sm font-medium text-gray-500">Deployment status</label>
+            <div className="wrap-anywhere">
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row items-center justify-start w-full">
+                  {deploymentStatus.message}
+                </div>
+                {deploymentStatus.progress > 0
+                  ? <progress value={deploymentStatus.progress} max="100" className="progress progress-primary w-full max-w-full" />
+                  : <div className="h-2 w-full" />
+                }
+              </div>
+            </div>
+          </div>
           <div className="w-[calc(100%-0.5rem)] ml-1 max-w-[calc(100%-0.5rem)] mt-4">
             <TokenMetadataDisplay
               tokenData={vestingData?.tokenData}
               chainId={vestingData?.chainId}
               tokenAddress={vestingData?.tokenAddress}
             />
-          </div>
-        </div>
-        <div className="w-md max-w-md">
-          <label className="text-sm font-medium text-gray-500">Deployment status</label>
-          <div className="wrap-anywhere">
-            <div className="flex flex-col items-center">
-              <div className="flex flex-row items-center justify-start w-full">
-                {deploymentStatus.message}
-              </div>
-              {deploymentStatus.progress > 0
-                ? <progress value={deploymentStatus.progress} max="100" className="progress progress-primary w-full max-w-full" />
-                : <div className="h-2 w-full" />
-              }
-            </div>
           </div>
         </div>
       </div>

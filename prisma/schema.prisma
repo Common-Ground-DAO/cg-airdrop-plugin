@@ -26,6 +26,7 @@ model Airdrop {
   items            AirdropItem[]
   merkleTree       MerkleTree?
   verification     Json?
+  termsLink        String?
 
   @@index(fields: [communityId])
 }
@@ -63,6 +64,7 @@ model Vesting {
   endTimeSeconds      Int
   isLSP7              Boolean
   verification        Json?
+  termsLink           String?
 
   @@index(fields: [beneficiaryAddress])
   @@index(fields: [communityId])

@@ -9,6 +9,7 @@ export interface AirdropData {
   tokenAddress?: `0x${string}`;
   chainId?: number;
   tokenData?: TokenData;
+  termsLink?: string;
 }
 
 const addressRegex = /^(0x)?[0-9a-fA-F]{40}$/;

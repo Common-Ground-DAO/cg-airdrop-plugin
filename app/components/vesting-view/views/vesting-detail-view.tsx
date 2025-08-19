@@ -275,6 +275,15 @@ export default function VestingDetailView({
                       </div>)}
                     </td>
                   </tr>}
+                  {vesting.termsLink && <tr>
+                    <td>Terms</td>
+                    <td>
+                      <a href={vesting.termsLink} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+                        <MdArrowOutward className="inline-block mr-1" />
+                        View terms
+                      </a>
+                    </td>
+                  </tr>}
                 </tbody>
               </table>
               <div className="flex flex-col items-center gap-2 m-4">

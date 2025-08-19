@@ -9,7 +9,7 @@ export function CgPluginLibProvider({ children }: { children: React.ReactNode })
     const [searchParams] = useSearchParams();
     const promiseRef = useRef<Promise<void> | null>(null);
 
-    const iframeUid = useMemo(() => searchParams.get("iframeUid"), []); // do not update
+    const iframeUid = useMemo(() => searchParams.get("iframeUid"), [searchParams]);
 
     useEffect(() => {
         if (!cgPluginLib && !promiseRef.current) {

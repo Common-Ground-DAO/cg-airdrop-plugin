@@ -13,6 +13,7 @@ export async function action({ request }: { request: Request }) {
   const userInfoRaw = formData.get("userInfoRaw") as string;
   const items = JSON.parse(formData.get("items") as string || "[]");
   const tree = JSON.parse(formData.get("tree") as string || "null");
+  const termsLink = formData.get("termsLink") as string || null;
 
   // Todo: validate items === tree.leaves?
 
@@ -50,6 +51,7 @@ export async function action({ request }: { request: Request }) {
       tokenAddress,
       chainId: parseInt(chainId),
       airdropAddress,
+      termsLink,
       items: {
         createMany: {
           data: items
