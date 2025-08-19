@@ -6,10 +6,16 @@ import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 import FormData from "form-data";
 
-type VerificationStatus = {
-  status: "not-started" | "pending" | "success" | "error";
-  error?: string;
-  data?: any;
+const RETRY_DELAY = 1000 * 60 * 1; // 1 minute
+
+export type VerificationStatus = {
+  status: "not-started" | "success" | "error";
+  version: 1;
+  etherscanResponse?: string | Record<string, any> | null;
+  blockscoutResponse?: string | Record<string, any> | null;
+  verifiedAt: number;
+  verifiedUrls: string[];
+  error?: any;
 };
 
 type ContractName = "AirdropClaim" | "VestingWallet" | "LSP7Vesting";
@@ -52,6 +58,92 @@ async function promiseFormSubmit(form: FormData, url: string): Promise<string | 
   });
 }
 
+function getEtherscanUrls(chainId: number): string[] {
+  switch (chainId) {
+    case 31337: // Hardhat
+      return [];
+    case 1: // Mainnet
+      return ["https://etherscan.io"];
+    case 8453: // Base
+      return ["https://basescan.org"];
+    case 56: // BNB Smart Chain
+      return ["https://bscscan.com"];
+    case 42161: // Arbitrum One
+      return ["https://arbiscan.io"];
+    case 42170: // Arbitrum Nova
+      return ["https://nova.arbiscan.io"];
+    case 43114: // Avalanche
+      return [];
+    case 42220: // Celo
+      return ["https://celoscan.io"];
+    case 250: // Fantom
+      return [];
+    case 100: // Gnosis
+      return ["https://gnosisscan.io"];
+    case 59144: // Linea Mainnet
+      return ["https://lineascan.build"];
+    case 42: // Lukso
+      return [];
+    case 4201: // Lukso Testnet
+      return [];
+    case 10: // Optimism
+      return ["https://optimistic.etherscan.io"];
+    case 137: // Polygon
+      return ["https://polygonscan.com"];
+    case 1101: // Polygon zkEVM
+      return [];
+    case 534352: // Scroll
+      return ["https://scrollscan.com"];
+    case 11155111: // Sepolia
+      return ["https://sepolia.etherscan.io"];
+    default:
+      return [];
+  }
+}
+
+function getBlockscoutBaseUrls(chainId: number): string[] {
+  switch (chainId) {
+    case 31337: // Hardhat
+      return [];
+    case 1: // Mainnet
+      return ["https://eth.blockscout.com"];
+    case 8453: // Base
+      return ["https://base.blockscout.com"];
+    case 56: // BNB Smart Chain
+      return [];
+    case 42161: // Arbitrum One
+      return ["https://arbitrum.blockscout.com"];
+    case 42170: // Arbitrum Nova
+      return ["https://arbitrum-nova.blockscout.com"];
+    case 43114: // Avalanche
+      return [];
+    case 42220: // Celo
+      return ["https://celo.blockscout.com"];
+    case 250: // Fantom
+      return [];
+    case 100: // Gnosis
+      return ["https://gnosis.blockscout.com"];
+    case 59144: // Linea Mainnet
+      return ["https://explorer.linea.build"];
+    case 42: // Lukso
+      return ["https://explorer.lukso.network"];
+    case 4201: // Lukso Testnet
+      return ["https://explorer.execution.testnet.lukso.network"];
+    case 10: // Optimism
+      return ["https://explorer.optimism.io"];
+    case 137: // Polygon
+      return ["https://polygon.blockscout.com"];
+    case 1101: // Polygon zkEVM
+      return [];
+    case 534352: // Scroll
+      return ["https://scroll.blockscout.com"];
+    case 11155111: // Sepolia
+      return ["https://eth-sepolia.blockscout.com"];
+    default:
+      return [];
+  }
+}
+
 function verifyBlockscout({
   contractName,
   contractAddress,
@@ -88,10 +180,15 @@ function verifyEtherscan({
   constructorArgs: string,
   url: string,
 }) {
+  if (!env.ETHERSCAN_API_KEY) {
+    return null;
+  }
   const fullContractName = verificationData.contractnames.find((name) => name.endsWith(`${contractName}.sol:${contractName}`));
   if (!fullContractName) {
     throw new Error("Contract not found");
   }
+
+  console.log("Constructor args:", constructorArgs);
 
   const form = new FormData();
   form.append("module", "contract");
@@ -101,19 +198,32 @@ function verifyEtherscan({
   form.append("codeformat", "solidity-standard-json-input");
   form.append("sourceCode", verificationData.sourceCode);
   form.append("contractaddress", contractAddress);
-  form.append("compilerversion", verificationData.compilerVersion);
+  form.append("compilerversion", "v" + verificationData.compilerVersion);
   form.append("contractname", fullContractName);
-  form.append("constructorArguments", constructorArgs);
+  form.append("constructorArguments", constructorArgs.startsWith("0x") ? constructorArgs.slice(2) : constructorArgs);
 
   return promiseFormSubmit(form, url);
 }
 
 export async function verifyContract(type: "airdrop" | "vesting", id: number) {
+  let verificationStatus: VerificationStatus = {
+    status: "not-started",
+    version: 1,
+    verifiedAt: Date.now(),
+    verifiedUrls: [],
+  };
+  let etherscanDone = false;
+  let blockscoutDone = false;
+  let contractName: ContractName;
+  let chainId: number;
+  let contractAddress: `0x${string}`;
+  let constructorArgs: string;
+  let existingVerification: VerificationStatus | undefined;
+
+  // Airdrop verification
   if (type === "airdrop") {
     const airdrop = await prisma.airdrop.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
       include: {
         merkleTree: true,
       }
@@ -124,50 +234,156 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number) {
     if (!airdrop.merkleTree) {
       return { status: "error", error: "Airdrop has no merkle tree" };
     }
-    const contractName = verificationData.contractnames.find((name) => name.endsWith("AirdropClaim.sol:AirdropClaim"));
-    if (!contractName) {
-      return { status: "error", error: "AirdropClaim.sol:AirdropClaim contract not found" };
-    }
+    // Load merkle tree 
     const tree = StandardMerkleTree.load(airdrop.merkleTree.data as unknown as StandardMerkleTreeData<[string, string]>);
-    const constructorArgs = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes32"], [airdrop.tokenAddress, tree.root as `0x${string}`]);
-    
-    console.log(airdrop.chainId, airdrop.airdropAddress, constructorArgs);
-    
-    switch (airdrop.chainId) {
-      case 1: // Mainnet
-        const etherscanResponse = await verifyEtherscan({
-          contractName: "AirdropClaim",
-          chainId: airdrop.chainId,
-          contractAddress: airdrop.airdropAddress as `0x${string}`,
-          constructorArgs,
-          url: "https://api.etherscan.io/api",
-        });
-        console.log(etherscanResponse);
-        break;
-      case 137: // Polygon
-        break;
-      case 8453: // Base
-        break;
-      case 42161: // Arbitrum
-        break;
-      case 11155111: // Sepolia
-        const blockscoutResponse = await verifyBlockscout({
-          contractName: "AirdropClaim",
-          contractAddress: airdrop.airdropAddress as `0x${string}`,
-          constructorArgs,
-          baseUrl: "https://eth-sepolia.blockscout.com/",
-        });
-        console.log(blockscoutResponse);
-        break;
-      default:
-        return { status: "error", error: "Unsupported chain ID" };
-    }
 
+    contractName = "AirdropClaim";
+    existingVerification = airdrop.verification as VerificationStatus | undefined;
+    chainId = airdrop.chainId;
+    contractAddress = airdrop.airdropAddress as `0x${string}`;
+    constructorArgs = ethers.AbiCoder.defaultAbiCoder().encode(["address", "bytes32"], [airdrop.tokenAddress, tree.root as `0x${string}`]);
+  
+  // Vesting verification
   } else if (type === "vesting") {
     const vesting = await prisma.vesting.findUnique({
-      where: {
-        id,
+      where: { id },
+    });
+    if (!vesting) {
+      return { status: "error", error: "Vesting not found" };
+    }
+
+    contractName = "VestingWallet";
+    if (vesting.isLSP7) {
+      contractName = "LSP7Vesting";
+    }
+    existingVerification = vesting.verification as VerificationStatus | undefined;
+    chainId = vesting.chainId;
+    contractAddress = vesting.contractAddress as `0x${string}`;
+    constructorArgs = ethers.AbiCoder.defaultAbiCoder().encode(["address", "uint64", "uint64"], [vesting.tokenAddress, vesting.startTimeSeconds, vesting.endTimeSeconds - vesting.startTimeSeconds]);
+  }
+  else {
+    throw new Error("Invalid contract type: " + type);
+  }
+
+  if (existingVerification) {
+    if (!!existingVerification.etherscanResponse) {
+      etherscanDone = true;
+      verificationStatus.etherscanResponse = existingVerification.etherscanResponse;
+    }
+    if (!!existingVerification.blockscoutResponse) {
+      blockscoutDone = true;
+      verificationStatus.blockscoutResponse = existingVerification.blockscoutResponse;
+    }
+    if (etherscanDone && blockscoutDone) {
+      return { status: "error", error: "Contract already verified" };
+    }
+    // Only retry if the verification is older than 1 minute
+    if (existingVerification.verifiedAt > Date.now() - RETRY_DELAY) {
+      const waitTime = Math.ceil((existingVerification.verifiedAt + RETRY_DELAY - Date.now()) / 1000);
+      return { status: "error", error: `Wait another ${waitTime}s before retrying` };
+    }
+  }
+
+  const promises: Promise<{
+    type: "etherscan" | "blockscout";
+    error?: string;
+    response?: string | Record<string, any> | null;
+    verifiedUrl?: string;
+  }>[] = [];
+
+  // Verify on Etherscan
+  const etherscanUrl = getEtherscanUrls(chainId)[0] as string | undefined;
+  if (etherscanUrl && !etherscanDone) {
+    // Note that etherscanUrl is not used in the verifyEtherscan function, but
+    // only to check if the chain is supported by Etherscan
+    promises.push(new Promise(async (resolve, reject) => {
+      try {
+        const response = await verifyEtherscan({
+          contractName,
+          chainId,
+          contractAddress,
+          constructorArgs,
+          url: "https://api.etherscan.io/api", // Do not use etherscanUrl here, it's only used to check if the chain is supported by Etherscan
+        });
+        resolve({
+          type: "etherscan",
+          response,
+          verifiedUrl: etherscanUrl + "/address/" + contractAddress,
+        });
       }
+      catch (e) {
+        console.error("Error verifying contract on Etherscan", e);
+        resolve({
+          type: "etherscan",
+          error: e instanceof Error ? e.message : "Unknown error"
+        });
+      }
+    }));
+  }
+
+  // Verify on Blockscout
+  const blockscoutBaseUrl = getBlockscoutBaseUrls(chainId)[0] as string | undefined;
+  if (blockscoutBaseUrl && !blockscoutDone) {
+    // Note that blockscoutBaseUrl is used in the verifyBlockscout function, as
+    // blockscout does not validate contracts in a central service
+    promises.push(new Promise(async (resolve, reject) => {
+      try {
+        const response = await verifyBlockscout({
+          contractName,
+          contractAddress,
+          constructorArgs,
+          baseUrl: blockscoutBaseUrl,
+        });
+        resolve({
+          type: "blockscout",
+          response,
+          verifiedUrl: blockscoutBaseUrl + "/address/" + contractAddress,
+        });
+      }
+      catch (e) {
+        console.error("Error verifying contract on Blockscout", e);
+        resolve({
+          type: "blockscout",
+          error: e instanceof Error ? e.message : "Unknown error"
+        });
+      }
+    }));
+  }
+
+  const results = await Promise.all(promises);
+  let success = false;
+  for (const result of results) {
+    if (result.response) {
+      success = true;
+      if (result.type === "etherscan") {
+        verificationStatus.etherscanResponse = result.response;
+      }
+      else if (result.type === "blockscout") {
+        verificationStatus.blockscoutResponse = result.response;
+      }
+    }
+    if (result.verifiedUrl) {
+      verificationStatus.verifiedUrls.push(result.verifiedUrl);
+    }
+    if (result.error) {
+      verificationStatus.error += `${verificationStatus.error ? "\n" : ""}Error verifying on ${result.type} instance ${result.type === "blockscout" ? blockscoutBaseUrl : etherscanUrl}`
+    }
+  }
+  if (success) {
+    verificationStatus.status = "success";
+  }
+
+  // Update database
+  if (type === "airdrop") {
+    await prisma.airdrop.update({
+      where: { id },
+      data: { verification: verificationStatus },
+    });
+  }
+  else if (type === "vesting") {
+    await prisma.vesting.update({
+      where: { id },
+      data: { verification: verificationStatus },
     });
   }
 }

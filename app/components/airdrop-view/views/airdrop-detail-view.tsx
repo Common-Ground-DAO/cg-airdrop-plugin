@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
-import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
+import { IoTrashOutline } from "react-icons/io5";
+import { GrValidate } from "react-icons/gr";
+import { MdArrowOutward } from "react-icons/md";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
@@ -11,6 +13,8 @@ import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
 import { useErc20Abi, useLsp7Abi } from "~/hooks/contracts";
+import type { VerificationStatus } from "~/lib/.server/verify";
+import { useCgPluginLib } from "~/context/plugin_lib";
 
 export default function AirdropDetailView({
   airdrop,
@@ -34,6 +38,18 @@ export default function AirdropDetailView({
   const erc20Abi = useErc20Abi();
   const lsp7Abi = useLsp7Abi();
   const submit = useSubmit();
+
+  const pluginLib = useCgPluginLib();
+  const navigateLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    ev.preventDefault();
+    pluginLib?.navigate(ev.currentTarget.href);
+  }, [pluginLib]);
+
+  const verification = useMemo(() => {
+    if (!airdrop.verification) return null;
+    return airdrop.verification as VerificationStatus;
+  }, [airdrop.verification]);
+
   const {
     writeContract,
     isPending: isPendingWriteContract,
@@ -212,6 +228,8 @@ export default function AirdropDetailView({
     tokenData.isFetching ||
     !airdropAbi || !erc20Abi || !lsp7Abi;
 
+  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse);
+
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
@@ -226,7 +244,7 @@ export default function AirdropDetailView({
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
             ><IoTrashOutline /><span>Delete Airdrop</span></button>
-            <button
+            {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={() => {
                 const formData = new FormData();
@@ -234,7 +252,7 @@ export default function AirdropDetailView({
                 formData.append("id", airdrop.id.toString());
                 submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
               }}
-            ><IoTrashOutline /><span>Verify Contract</span></button>
+            ><GrValidate /><span>Verify Contract</span></button>}
           </div>}
         </nav>
         {isLoading && !errors.length && (
@@ -307,6 +325,17 @@ export default function AirdropDetailView({
                         </td>
                       </tr>
                     </>}
+                    {verification && verification.verifiedUrls.length > 0 && <tr>
+                      <td>Contract verified on:</td>
+                      <td>
+                        {verification.verifiedUrls.map((url) => <div>
+                          <a href={url} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+                            <MdArrowOutward className="inline-block mr-1" />
+                            {url.match(/^https?:\/\/([^/]+)/)?.[1] || url}
+                          </a>
+                        </div>)}
+                      </td>
+                    </tr>}
                   </tbody>
                 </table>
               </div>

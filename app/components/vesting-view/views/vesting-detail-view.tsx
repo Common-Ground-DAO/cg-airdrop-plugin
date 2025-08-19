@@ -3,10 +3,14 @@ import { useCgData } from "~/context/cg_data";
 import type { Vesting } from "generated/prisma";
 import { useErc20Abi, useTokenData, useVestingAbi } from "~/hooks";
 import { useAccount, useReadContract, useTransactionReceipt, useWriteContract } from "wagmi";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { IoArrowBack, IoTrashOutline } from "react-icons/io5";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { IoTrashOutline } from "react-icons/io5";
+import { GrValidate } from "react-icons/gr";
+import { MdArrowOutward } from "react-icons/md";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
 import FormatUnits from "~/components/format-units/format-units";
+import { useCgPluginLib } from "~/context/plugin_lib";
+import type { VerificationStatus } from "~/lib/.server/verify";
 
 export interface VestingDetailViewProps {
   vesting: Vesting;
@@ -34,6 +38,17 @@ export default function VestingDetailView({
     error: writeContractError,
     data: writeContractData,
   } = useWriteContract();
+
+  const pluginLib = useCgPluginLib();
+  const navigateLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    ev.preventDefault();
+    pluginLib?.navigate(ev.currentTarget.href);
+  }, [pluginLib]);
+
+  const verification = useMemo(() => {
+    if (!vesting.verification) return null;
+    return vesting.verification as VerificationStatus;
+  }, [vesting.verification]);
 
   const { data: transactionReceipt, isLoading: isLoadingTransactionReceipt, error: transactionReceiptError } = useTransactionReceipt({
     hash: writeContractData as `0x${string}`,
@@ -141,6 +156,8 @@ export default function VestingDetailView({
   const isLoading = isLoadingBeneficiary || isLoadingStart || isLoadingDuration;
   const errors = [beneficiaryError, startError, durationError, releasableError, releasedError, vestedAmountError].filter(Boolean);
 
+  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse);
+
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
@@ -155,7 +172,7 @@ export default function VestingDetailView({
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-vesting-modal") as any)?.showModal()}
             ><IoTrashOutline /><span>Delete Vesting</span></button>
-            <button
+            {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={() => {
                 const formData = new FormData();
@@ -163,7 +180,7 @@ export default function VestingDetailView({
                 formData.append("id", vesting.id.toString());
                 submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
               }}
-            ><IoTrashOutline /><span>Verify Contract</span></button>
+            ><GrValidate /><span>Verify Contract</span></button>}
           </div>}
         </nav>
         {isLoading && !errors.length && (
@@ -247,6 +264,17 @@ export default function VestingDetailView({
                         : "loading..."}
                     </td>
                   </tr>
+                  {verification && verification.verifiedUrls.length > 0 && <tr>
+                    <td>Contract verified on:</td>
+                    <td>
+                      {verification.verifiedUrls.map((url) => <div>
+                        <a href={url} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+                          <MdArrowOutward className="inline-block mr-1" />
+                          {url.match(/^https?:\/\/([^/]+)/)?.[1] || url}
+                        </a>
+                      </div>)}
+                    </td>
+                  </tr>}
                 </tbody>
               </table>
               <div className="flex flex-col items-center gap-2 m-4">

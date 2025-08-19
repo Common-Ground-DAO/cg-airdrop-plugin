@@ -1,5 +1,6 @@
 import { isUserAdmin, validateCommunityData, validateUserData } from '~/lib/.server/cgDataUtils';
 import { prisma } from '~/lib/.server/db';
+import { verifyContract } from '~/lib/.server/verify';
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/;
 
@@ -15,6 +16,7 @@ export async function action({ request }: { request: Request }) {
   const contractAddress = formData.get("contractAddress") as `0x${string}`;
   const communityInfoRaw = formData.get("communityInfoRaw") as string;
   const userInfoRaw = formData.get("userInfoRaw") as string;
+  const isLSP7 = formData.get("isLSP7") === "true" || formData.get("isLSP7") === "1";
 
   const communityInfo = await validateCommunityData(communityInfoRaw);
   const userInfo = await validateUserData(userInfoRaw);
@@ -62,8 +64,11 @@ export async function action({ request }: { request: Request }) {
       tokenAddress,
       chainId: parseInt(chainId),
       contractAddress,
+      isLSP7,
     }
   });
+
+  await verifyContract("vesting", vestingId);
 
   return ({ vestingId });
 } 

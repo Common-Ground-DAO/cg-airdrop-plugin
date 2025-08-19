@@ -3,7 +3,6 @@ import { useCgPluginLib } from "~/context/plugin_lib";
 
 export default function Home() {
     const pluginLib = useCgPluginLib();
-
     const navigateLink = useCallback((a: HTMLAnchorElement) => {
         pluginLib?.navigate(a.href);
     }, [pluginLib]);

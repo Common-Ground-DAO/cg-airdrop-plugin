@@ -174,6 +174,7 @@ export default function VestingCreate() {
     formData.append("endTimeSeconds", vestingData.endTimeSeconds.toString());
     formData.append("communityInfoRaw", __communityInfoRawResponse!);
     formData.append("userInfoRaw", __userInfoRawResponse!);
+    formData.append("isLSP7", tokenData.type === "lsp7" ? "true" : "false");
 
     try {
       await fetcher.submit(formData, { method: "post", action: "/api/vesting/create" });
@@ -181,7 +182,7 @@ export default function VestingCreate() {
       console.error("Error submitting vesting to database", error);
       setError("Error submitting vesting to database");
     }
-  }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse]);
+  }, [communityInfo, userInfo, submit, vestingData, __communityInfoRawResponse, __userInfoRawResponse, tokenData.type]);
 
   const inProgress = isPending || isSuccess || isConfirming || isConfirmed;
 
