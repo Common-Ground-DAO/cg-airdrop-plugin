@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const contractNames = ["AirdropClaim", "VestingWallet", "LSP7Vesting"];
-const outputPath = path.join(process.cwd(), "app/contracts/.server");
+const outFilePath = path.join(process.cwd(), "app/contracts/.server");
 
 async function main() {
   // Get build info paths
@@ -14,24 +14,32 @@ async function main() {
   }
   const buildInfoPath = buildInfoPaths[0];
   const buildInfo = JSON.parse(fs.readFileSync(buildInfoPath, "utf8"));
-  const { input, solcLongVersion } = buildInfo;
+  const { input, output, solcLongVersion } = buildInfo;
   const result = {
     sourceCode: JSON.stringify(input),
-    contractnames: [] as string[],
     compilerVersion: solcLongVersion,
+    contractImports: {} as Record<string, string[]>,
   };
-  const sourceFiles = Object.keys(input.sources);
-  for (const contractName of contractNames) {
-    const contractPath = sourceFiles.find((file) => file.endsWith(contractName + ".sol"));
-    if (!contractPath) {
-      throw new Error("Contract " + contractName + " not found");
+  const outputFiles = Object.keys(output.sources);
+  for (const outputFile of outputFiles) {
+    const nodes = output.sources[outputFile].ast?.nodes;
+    if (!nodes) {
+      throw new Error("No nodes found for " + outputFile);
     }
-    result.contractnames.push(`${contractPath}:${contractName}`);
+    const importPaths = new Set<string>();
+    for (const node of nodes) {
+      if (node.nodeType === "ImportDirective") {
+        const absolutePath = node.absolutePath;
+        importPaths.add(absolutePath);
+      }
+    }
+    result.contractImports[outputFile] = Array.from(importPaths);
   }
-  const outputFile = path.join(outputPath, "verification-data.json");
-  fs.mkdirSync(outputPath, { recursive: true });
-  fs.writeFileSync(outputFile, JSON.stringify(result));
-  console.log("Wrote verification data to " + outputFile);
+
+  const outFile = path.join(outFilePath, "verification-data.json");
+  fs.mkdirSync(outFilePath, { recursive: true });
+  fs.writeFileSync(outFile, JSON.stringify(result));
+  console.log("Wrote verification data to " + outFile);
 }
 
 main().catch((error) => {

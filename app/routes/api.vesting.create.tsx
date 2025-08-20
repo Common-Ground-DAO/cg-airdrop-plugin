@@ -70,7 +70,5 @@ export async function action({ request }: { request: Request }) {
     }
   });
 
-  await verifyContract("vesting", vestingId);
-
   return ({ vestingId });
 } 

@@ -16,15 +16,19 @@ import { useErc20Abi, useLsp7Abi } from "~/hooks/contracts";
 import type { VerificationStatus } from "~/lib/.server/verify";
 import { useCgPluginLib } from "~/context/plugin_lib";
 
+export interface AirdropDetailViewProps {
+  airdrop: Airdrop;
+  deleteAirdrop: (airdropId: number) => Promise<void>;
+  deleteIsSubmitting: boolean;
+  refreshAirdrops: () => void;
+}
+
 export default function AirdropDetailView({
   airdrop,
   deleteAirdrop,
   deleteIsSubmitting,
-}: {
-  airdrop: Airdrop,
-  deleteAirdrop: (airdropId: number) => Promise<void>,
-  deleteIsSubmitting: boolean,
-}) {
+  refreshAirdrops,
+}: AirdropDetailViewProps) {
   const airdropItemsFetcher = useFetcher<{
     airdropItems: AirdropItem[];
     merkleTree: MerkleTree;
@@ -37,7 +41,7 @@ export default function AirdropDetailView({
   const airdropAbi = useAirdropAbi();
   const erc20Abi = useErc20Abi();
   const lsp7Abi = useLsp7Abi();
-  const submit = useSubmit();
+  const [verifyState, setVerifyState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const pluginLib = useCgPluginLib();
   const navigateLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -211,6 +215,42 @@ export default function AirdropDetailView({
     });
   }, [writeContract, transferAbi, transferArgs, airdrop.tokenAddress, fundsToAdd, tokenData.decimals]);
 
+  const verifyContract = useCallback(() => {
+    if (
+      airdrop.createdAt.getTime() > Date.now() - 1000 * 60 ||
+      verifyState === "loading" ||
+      verifyState === "success"
+    ) {
+      return;
+    }
+    setVerifyState("loading");
+    const formData = new FormData();
+    formData.append("type", "airdrop");
+    formData.append("id", airdrop.id.toString());
+    fetch('/api/verify-contract', { method: "post", body: formData })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setVerifyState("success");
+            refreshAirdrops();
+          }
+          else {
+            console.error("Error verifying contract: ", data.error);
+            setVerifyState("error");
+          }
+        }
+        else {
+          console.error("Error verifying contract: ", res.statusText);
+          setVerifyState("error");
+        }
+      })
+      .catch((err) => {
+        console.error("Error verifying contract: ", err);
+        setVerifyState("error");
+      });
+  }, [airdrop.id, refreshAirdrops, airdrop.createdAt, verifyState]);
+
   const hasItems = ownAirdropItems.length > 0 || otherAirdropItems.length > 0;
 
   const errors = [
@@ -228,7 +268,7 @@ export default function AirdropDetailView({
     tokenData.isFetching ||
     !airdropAbi || !erc20Abi || !lsp7Abi;
 
-  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse);
+  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse) && verifyState !== "success";
 
   return (
     <>
@@ -246,12 +286,7 @@ export default function AirdropDetailView({
             ><IoTrashOutline /><span>Delete Airdrop</span></button>
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("type", "airdrop");
-                formData.append("id", airdrop.id.toString());
-                submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
-              }}
+              onClick={verifyContract}
             ><GrValidate /><span>Verify Contract</span></button>}
           </div>}
         </nav>

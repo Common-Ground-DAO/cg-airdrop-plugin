@@ -16,19 +16,21 @@ export interface VestingDetailViewProps {
   vesting: Vesting;
   deleteVesting: (vestingId: number) => Promise<void>;
   deleteIsSubmitting: boolean;
+  refreshVestings: () => void;
 }
 
 export default function VestingDetailView({
   vesting,
   deleteVesting,
   deleteIsSubmitting,
+  refreshVestings,
 }: VestingDetailViewProps) {
   const { isAdmin } = useCgData();
   const vestingAbi = useVestingAbi();
   const erc20Abi = useErc20Abi();
   const { address } = useAccount();
   const navigate = useNavigate();
-  const submit = useSubmit();
+  const [verifyState, setVerifyState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const tokenData = useTokenData(vesting.tokenAddress as `0x${string}`, vesting.chainId);
   const {
     writeContract,
@@ -132,6 +134,42 @@ export default function VestingDetailView({
     }
   }, [transactionReceipt, refetchBalance, refetchReleased, refetchReleasable, refetchVestedAmount]);
 
+  const verifyContract = useCallback(() => {
+    if (
+      vesting.createdAt.getTime() > Date.now() - 1000 * 60 ||
+      verifyState === "loading" ||
+      verifyState === "success"
+    ) {
+      return;
+    }
+    setVerifyState("loading");
+    const formData = new FormData();
+    formData.append("type", "vesting");
+    formData.append("id", vesting.id.toString());
+    fetch('/api/verify-contract', { method: "post", body: formData })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setVerifyState("success");
+            refreshVestings();
+          }
+          else {
+            console.error("Error verifying contract: ", data.error);
+            setVerifyState("error");
+          }
+        }
+        else {
+          console.error("Error verifying contract: ", res.statusText);
+          setVerifyState("error");
+        }
+      })
+      .catch((err) => {
+        console.error("Error verifying contract: ", err);
+        setVerifyState("error");
+      });
+  }, [vesting.id, refreshVestings, vesting.createdAt, verifyState]);
+
   const releasableRef = useRef<bigint | undefined>(undefined);
   const releasedRef = useRef<bigint | undefined>(undefined);
   const vestedAmountRef = useRef<bigint | undefined>(undefined);
@@ -156,7 +194,7 @@ export default function VestingDetailView({
   const isLoading = isLoadingBeneficiary || isLoadingStart || isLoadingDuration;
   const errors = [beneficiaryError, startError, durationError, releasableError, releasedError, vestedAmountError].filter(Boolean);
 
-  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse);
+  const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse) && verifyState !== "success";
 
   return (
     <>
@@ -174,12 +212,7 @@ export default function VestingDetailView({
             ><IoTrashOutline /><span>Delete Vesting</span></button>
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("type", "vesting");
-                formData.append("id", vesting.id.toString());
-                submit(formData, { method: "post", action: `/api/verify-contract`, navigate: false });
-              }}
+              onClick={verifyContract}
             ><GrValidate /><span>Verify Contract</span></button>}
           </div>}
         </nav>
@@ -202,7 +235,7 @@ export default function VestingDetailView({
           </div>
         </div>)}
         {!isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
-          <div className="flex flex-col max-w-full justify-start gap-4">
+          <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
               chainId={vesting.chainId}

@@ -69,7 +69,5 @@ export async function action({ request }: { request: Request }) {
     });
   }
 
-  await verifyContract("airdrop", airdropId);
-
   return ({ airdropId });
 } 

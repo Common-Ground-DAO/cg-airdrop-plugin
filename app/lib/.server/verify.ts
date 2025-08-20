@@ -58,6 +58,41 @@ async function promiseFormSubmit(form: FormData, url: string): Promise<string | 
   });
 }
 
+type ContractPath = keyof typeof verificationData.contractImports;
+const parsedInputObject = JSON.parse(verificationData.sourceCode) as {
+  language: string;
+  sources: Partial<Record<ContractPath, any>>;
+  settings: Record<string, any>;
+};
+
+function getFilteredContractSources(contractName: ContractName): typeof parsedInputObject {
+  const contractPath = Object.keys(verificationData.contractImports).find((name) => name.endsWith(`${contractName}.sol`)) as ContractPath | undefined;
+  if (!contractPath) {
+    throw new Error("Contract not found");
+  }
+  // Recursively handle all imports
+  const gatheredImports = new Set<ContractPath>();
+  const gatherImportsRecursive = (path: ContractPath) => {
+    gatheredImports.add(path);
+    for (const newPath of verificationData.contractImports[path] as ContractPath[]) {
+      if (gatheredImports.has(newPath)) {
+        continue;
+      }
+      gatherImportsRecursive(newPath);
+    }
+  };
+  gatherImportsRecursive(contractPath);
+  // Create filtered sources object
+  const newSources: Partial<Record<ContractPath, any>> = {};
+  for (const importPath of Array.from(gatheredImports)) {
+    newSources[importPath] = parsedInputObject.sources[importPath];
+  }
+  return {
+    ...parsedInputObject,
+    sources: newSources,
+  };
+}
+
 function getEtherscanUrls(chainId: number): string[] {
   switch (chainId) {
     case 31337: // Hardhat
@@ -146,11 +181,13 @@ function getBlockscoutBaseUrls(chainId: number): string[] {
 
 function verifyBlockscout({
   contractName,
+  filteredSourceCode,
   contractAddress,
   constructorArgs,
   baseUrl,
 }: {
   contractName: ContractName,
+  filteredSourceCode: string,
   contractAddress: `0x${string}`,
   constructorArgs: string,
   baseUrl: string,
@@ -158,7 +195,7 @@ function verifyBlockscout({
   const form = new FormData();
   form.append("compiler_version", verificationData.compilerVersion);
   form.append("contract_name", contractName);
-  form.append("files[0]", Buffer.from(verificationData.sourceCode, "utf-8"), "input.json");
+  form.append("files[0]", Buffer.from(filteredSourceCode, "utf-8"), "input.json");
   form.append("autodetect_constructor_args", "false");
   form.append("constructor_args", constructorArgs);
   form.append("license_type", "mit");
@@ -169,12 +206,14 @@ function verifyBlockscout({
 
 function verifyEtherscan({
   contractName,
+  filteredSourceCode,
   chainId,
   contractAddress,
   constructorArgs,
   url,
 }: {
   contractName: ContractName,
+  filteredSourceCode: string,
   chainId: number,
   contractAddress: `0x${string}`,
   constructorArgs: string,
@@ -183,12 +222,10 @@ function verifyEtherscan({
   if (!env.ETHERSCAN_API_KEY) {
     return null;
   }
-  const fullContractName = verificationData.contractnames.find((name) => name.endsWith(`${contractName}.sol:${contractName}`));
-  if (!fullContractName) {
+  const contractPath = Object.keys(verificationData.contractImports).find((name) => name.endsWith(`${contractName}.sol`));
+  if (!contractPath) {
     throw new Error("Contract not found");
   }
-
-  console.log("Constructor args:", constructorArgs);
 
   const form = new FormData();
   form.append("module", "contract");
@@ -196,10 +233,10 @@ function verifyEtherscan({
   form.append("apikey", env.ETHERSCAN_API_KEY);
   form.append("chainId", chainId.toString());
   form.append("codeformat", "solidity-standard-json-input");
-  form.append("sourceCode", verificationData.sourceCode);
+  form.append("sourceCode", filteredSourceCode);
   form.append("contractaddress", contractAddress);
   form.append("compilerversion", "v" + verificationData.compilerVersion);
-  form.append("contractname", fullContractName);
+  form.append("contractname", `${contractPath}:${contractName}`);
   form.append("constructorArguments", constructorArgs.startsWith("0x") ? constructorArgs.slice(2) : constructorArgs);
 
   return promiseFormSubmit(form, url);
@@ -231,6 +268,9 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number): P
     if (!airdrop) {
       return { status: "error", error: "Airdrop not found" };
     }
+    if (airdrop.createdAt.getTime() > Date.now() - 1000 * 60) {
+      return { status: "error", error: "Airdrop is too new, please wait one minute before verifying" };
+    }
     if (!airdrop.merkleTree) {
       return { status: "error", error: "Airdrop has no merkle tree" };
     }
@@ -250,6 +290,9 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number): P
     });
     if (!vesting) {
       return { status: "error", error: "Vesting not found" };
+    }
+    if (vesting.createdAt.getTime() > Date.now() - 1000 * 60) {
+      return { status: "error", error: "Vesting is too new, please wait one minute before verifying" };
     }
 
     contractName = "VestingWallet";
@@ -291,6 +334,9 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number): P
     verifiedUrl?: string;
   }>[] = [];
 
+  const filteredContractSources = getFilteredContractSources(contractName);
+  const filteredSourceCode = JSON.stringify(filteredContractSources);
+
   // Verify on Etherscan
   const etherscanUrl = getEtherscanUrls(chainId)[0] as string | undefined;
   if (etherscanUrl && !etherscanDone) {
@@ -300,6 +346,7 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number): P
       try {
         const response = await verifyEtherscan({
           contractName,
+          filteredSourceCode,
           chainId,
           contractAddress,
           constructorArgs,
@@ -330,6 +377,7 @@ export async function verifyContract(type: "airdrop" | "vesting", id: number): P
       try {
         const response = await verifyBlockscout({
           contractName,
+          filteredSourceCode,
           contractAddress,
           constructorArgs,
           baseUrl: blockscoutBaseUrl,
