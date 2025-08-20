@@ -61,7 +61,12 @@ export default function VestingView({ vestingId }: { vestingId?: number }) {
   }, [submit, __userInfoRawResponse, __communityInfoRawResponse, deletedIdsSet]);
 
   if (vesting) {
-    return <VestingDetailView vesting={vesting} deleteVesting={deleteVesting} deleteIsSubmitting={deleteIsSubmitting} />;
+    return <VestingDetailView
+      vesting={vesting}
+      deleteVesting={deleteVesting}
+      deleteIsSubmitting={deleteIsSubmitting}
+      refreshVestings={() => setRefreshTrigger(i => i + 1)}
+    />;
   }
 
   return <VestingListView vestings={vestings} />;

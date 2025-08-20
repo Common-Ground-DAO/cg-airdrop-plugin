@@ -61,7 +61,12 @@ export default function AirdropView({ airdropId }: { airdropId?: number }) {
   }, [submit, __userInfoRawResponse, __communityInfoRawResponse, deletedIdsSet]);
 
   if (airdrop) {
-    return <AirdropDetailView airdrop={airdrop} deleteAirdrop={deleteAirdrop} deleteIsSubmitting={deleteIsSubmitting} />;
+    return <AirdropDetailView
+      airdrop={airdrop}
+      deleteAirdrop={deleteAirdrop}
+      deleteIsSubmitting={deleteIsSubmitting}
+      refreshAirdrops={() => setRefreshTrigger(i => i + 1)}
+    />;
   }
 
   return <AirdropListView airdrops={airdrops} />;
