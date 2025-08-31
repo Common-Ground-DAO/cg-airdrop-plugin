@@ -180,7 +180,7 @@ export default function VestingDetailView({
     const formData = new FormData();
     formData.append("type", "vesting");
     formData.append("id", vesting.id.toString());
-    fetch('/api/verify-contract', { method: "post", body: formData })
+    fetch(`${import.meta.env.BASE_URL || '/'}api/verify-contract`, { method: "post", body: formData })
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();

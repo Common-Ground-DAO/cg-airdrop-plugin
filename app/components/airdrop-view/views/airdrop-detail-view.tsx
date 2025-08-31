@@ -262,7 +262,7 @@ export default function AirdropDetailView({
     const formData = new FormData();
     formData.append("type", "airdrop");
     formData.append("id", airdrop.id.toString());
-    fetch('/api/verify-contract', { method: "post", body: formData })
+    fetch(`${import.meta.env.BASE_URL || '/'}api/verify-contract`, { method: "post", body: formData })
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
