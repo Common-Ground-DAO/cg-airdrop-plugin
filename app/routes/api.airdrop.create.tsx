@@ -38,7 +38,7 @@ export async function action({ request }: { request: Request }) {
     }
   });
   
-  if (existingCount >= 10) {
+  if (existingCount >= 50) {
     throw new Error("You have reached the maximum number of airdrops for this community.");
   }
 

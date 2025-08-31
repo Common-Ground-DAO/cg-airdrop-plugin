@@ -11,6 +11,7 @@ import TokenMetadataDisplay from "~/components/token-metadata-display";
 import FormatUnits from "~/components/format-units/format-units";
 import { useCgPluginLib } from "~/context/plugin_lib";
 import type { VerificationStatus } from "~/lib/.server/verify";
+import CollapsedError from "~/components/error";
 
 export interface VestingDetailViewProps {
   vesting: Vesting;
@@ -32,6 +33,12 @@ export default function VestingDetailView({
   const navigate = useNavigate();
   const [verifyState, setVerifyState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const tokenData = useTokenData(vesting.tokenAddress as `0x${string}`, vesting.chainId);
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [verifyContractIn, setVerifyContractIn] = useState<string | null>(
+    vesting.createdAt.getTime() > Date.now() - 1000 * 60 
+    ? `${60 + Math.floor((vesting.createdAt.getTime() - Date.now()) / 1000)}s`
+    : null);
+
   const {
     writeContract,
     isPending: isPendingWriteContract,
@@ -51,6 +58,29 @@ export default function VestingDetailView({
     if (!vesting.verification) return null;
     return vesting.verification as VerificationStatus;
   }, [vesting.verification]);
+
+  // Set interval for verifying contract button
+  useEffect(() => {
+    let interval: any;
+    if (vesting.createdAt.getTime() > Date.now() - 1000 * 60) {
+      setVerifyContractIn(`${Math.floor((vesting.createdAt.getTime() - Date.now()) / 1000)}s`);
+      interval = setInterval(() => {
+        if (vesting.createdAt.getTime() > Date.now() - 1000 * 60) {
+          setVerifyContractIn(`${60 + Math.floor((vesting.createdAt.getTime() - Date.now()) / 1000)}s`);
+        } else {
+          clearInterval(interval);
+          setVerifyContractIn(null);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [vesting.createdAt.getTime()]);
+
+  // Close terms modal when release is running
+  useEffect(() => {
+    if (!isPendingWriteContract) return;
+    (document.getElementById("airdrop-terms-modal") as any)?.close();
+  }, [isPendingWriteContract]);
 
   const { data: transactionReceipt, isLoading: isLoadingTransactionReceipt, error: transactionReceiptError } = useTransactionReceipt({
     hash: writeContractData as `0x${string}`,
@@ -108,13 +138,17 @@ export default function VestingDetailView({
   });
 
   const release = useCallback(async () => {
+    if (vesting.termsLink && !termsAccepted) {
+      (document.getElementById("vesting-terms-modal") as any)?.showModal();
+      return;
+    }
     writeContract({
       address: vesting.contractAddress as `0x${string}`,
       abi: vestingAbi || [],
       functionName: "release",
       args: [vesting.tokenAddress as `0x${string}`],
     });
-  }, [writeContract, vesting.contractAddress, vesting.tokenAddress, vestingAbi]);
+  }, [writeContract, vesting.contractAddress, vesting.tokenAddress, vestingAbi, termsAccepted]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -213,7 +247,8 @@ export default function VestingDetailView({
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={verifyContract}
-            ><GrValidate /><span>Verify Contract</span></button>}
+              disabled={verifyContractIn !== null}
+            ><GrValidate /><span>{verifyContractIn !== null ? `Verify in ${verifyContractIn}` : "Verify Contract"}</span></button>}
           </div>}
         </nav>
         {isLoading && !errors.length && (
@@ -223,17 +258,7 @@ export default function VestingDetailView({
             </div>
           </div>
         )}
-        {errors.map((error) => <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
-          <input type="checkbox" />
-          <div className="collapse-title font-semibold">
-            Error
-          </div>
-          <div className="collapse-content text-sm">
-            <div className="max-w-full wrap-break-word">
-              {error?.message || "Unknown error"}
-            </div>
-          </div>
-        </div>)}
+        {errors.map((error) => <CollapsedError error={error} />)}
         {!isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
             <TokenMetadataDisplay
@@ -342,6 +367,28 @@ export default function VestingDetailView({
               onClick={() => deleteVesting(vesting.id).then(() => navigate("/vestings"))}
               disabled={deleteIsSubmitting}
             >Delete</button>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="vesting-terms-modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Do you accept the terms of the vesting?</h3>
+          <div>
+            <a href={vesting.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">View terms</a>
+          </div>
+          <label className="label">
+            <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />
+            I accept the terms of the vesting
+          </label>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-soft">Cancel</button>
+            </form>
+            {vesting.beneficiaryAddress.toLowerCase() === address?.toLowerCase() && <button
+              className={`btn btn-primary`}
+              onClick={release}
+              disabled={!termsAccepted}
+            >Release</button>}
           </div>
         </div>
       </dialog>

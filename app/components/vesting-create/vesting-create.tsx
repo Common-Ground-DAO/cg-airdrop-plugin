@@ -7,6 +7,7 @@ import type { TokenData } from "~/hooks/token-data";
 import TokenMetadataDisplay from "../token-metadata-display";
 import { useOpenzeppelinVestingContractFactory } from "~/hooks/contracts";
 import type { LSP7Vesting__factory, VestingWallet__factory } from "~/contracts";
+import CollapsedError from "../error";
 
 /**
  * The vesting contract can actually handle multiple tokens,
@@ -304,13 +305,7 @@ export default function VestingCreate() {
             />
             {!!termsLink && !termsLink.match(/^https?:\/\/[^\/]+\.[^\/]+/) && <p className="text-sm text-orange-400">Please make sure the link starts with https:// and is valid.</p>}
           </fieldset>
-          {error && <div className="collapse collapse-arrow bg-error">
-            <input type="checkbox" />
-            <div className="collapse-title font-semibold">Error</div>
-            <div className="collapse-content text-sm">
-              {error}
-            </div>  
-          </div>}
+          {error && <CollapsedError error={error} />}
           <div className="w-md max-w-md">
             <label className="text-sm font-medium text-gray-500">Deployment status</label>
             <div className="wrap-anywhere">

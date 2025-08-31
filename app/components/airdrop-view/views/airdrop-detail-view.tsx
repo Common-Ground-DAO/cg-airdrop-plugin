@@ -15,6 +15,7 @@ import TokenMetadataDisplay from "~/components/token-metadata-display";
 import { useErc20Abi, useLsp7Abi } from "~/hooks/contracts";
 import type { VerificationStatus } from "~/lib/.server/verify";
 import { useCgPluginLib } from "~/context/plugin_lib";
+import CollapsedError from "~/components/error";
 
 export interface AirdropDetailViewProps {
   airdrop: Airdrop;
@@ -42,6 +43,11 @@ export default function AirdropDetailView({
   const erc20Abi = useErc20Abi();
   const lsp7Abi = useLsp7Abi();
   const [verifyState, setVerifyState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [verifyContractIn, setVerifyContractIn] = useState<string | null>(
+    airdrop.createdAt.getTime() > Date.now() - 1000 * 60 
+    ? `${60 + Math.floor((airdrop.createdAt.getTime() - Date.now()) / 1000)}s` 
+    : null);
 
   const pluginLib = useCgPluginLib();
   const navigateLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -73,11 +79,30 @@ export default function AirdropDetailView({
     }
   }, []);
 
+  // Fetch airdrop items
   useEffect(() => {
     if (airdrop?.id === undefined) return;
     airdropItemsFetcher.submit({ airdropId: airdrop.id }, { method: "post", action: `/api/airdrop/details` });
   }, [airdrop?.id]);
 
+  // Set interval for verifying contract button
+  useEffect(() => {
+    let interval: any;
+    if (airdrop.createdAt.getTime() > Date.now() - 1000 * 60) {
+      setVerifyContractIn(`${Math.floor((airdrop.createdAt.getTime() - Date.now()) / 1000)}s`);
+      interval = setInterval(() => {
+        if (airdrop.createdAt.getTime() > Date.now() - 1000 * 60) {
+          setVerifyContractIn(`${60 + Math.floor((airdrop.createdAt.getTime() - Date.now()) / 1000)}s`);
+        } else {
+          clearInterval(interval);
+          setVerifyContractIn(null);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [airdrop.createdAt.getTime()]);
+
+  // Filter airdrop items to only include items for the current address
   const { ownAirdropItems, otherAirdropItems } = useMemo(() => {
     const lowerCaseAddress = address?.toLowerCase();
     const airdropItems = airdropItemsFetcher.data?.airdropItems;
@@ -173,8 +198,12 @@ export default function AirdropDetailView({
     }
   }, [transactionReceipt, refetchTotalClaimedAmount, refetchAirdropContractBalance, refetchHasClaimed]);
 
-  const claimAirdrop = useCallback((itemAddress: string, amountStr: `${number}`) => {
+  const claimAirdrop = useCallback((itemAddress: string, amountStr: `${number}`, termsAccepted: boolean = false) => {
     if (!merkleTree) return;
+    if (airdrop.termsLink && !termsAccepted) {
+      (document.getElementById("airdrop-terms-modal") as any)?.showModal();
+      return;
+    }
     let amount = 0n;
     try {
       amount = BigInt(amountStr);
@@ -203,7 +232,13 @@ export default function AirdropDetailView({
         });
       }
     }
-  }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract, tokenData.type]);
+  }, [merkleTree, addressToProofIndexMap, airdrop.airdropAddress, airdropAbi, writeContract, tokenData.type, termsAccepted]);
+
+  // Close terms modal when claim is running
+  useEffect(() => {
+    if (!isPendingWriteContract) return;
+    (document.getElementById("airdrop-terms-modal") as any)?.close();
+  }, [isPendingWriteContract]);
 
   const fundAirdropContract = useCallback(() => {
     if (!transferAbi || airdrop.tokenAddress === undefined) return;
@@ -287,7 +322,8 @@ export default function AirdropDetailView({
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={verifyContract}
-            ><GrValidate /><span>Verify Contract</span></button>}
+              disabled={verifyContractIn !== null}
+            ><GrValidate /><span>{verifyContractIn !== null ? `Verify in ${verifyContractIn}` : "Verify Contract"}</span></button>}
           </div>}
         </nav>
         {isLoading && !errors.length && (
@@ -297,17 +333,7 @@ export default function AirdropDetailView({
             </div>
           </div>
         )}
-        {errors.map((error) => <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
-          <input type="checkbox" />
-          <div className="collapse-title font-semibold">
-            Error
-          </div>
-          <div className="collapse-content text-sm">
-            <div className="max-w-full wrap-break-word">
-              {error?.message || "Unknown error"}
-            </div>
-          </div>
-        </div>)}
+        {errors.map((error) => <CollapsedError error={error} />)}
         {!isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
@@ -371,6 +397,12 @@ export default function AirdropDetailView({
                         </div>)}
                       </td>
                     </tr>}
+                    <tr>
+                      <td>Contract address</td>
+                      <td>
+                        {airdrop.airdropAddress}
+                      </td>
+                    </tr>
                     {airdrop.termsLink && <tr>
                       <td>Terms</td>
                       <td>
@@ -385,17 +417,7 @@ export default function AirdropDetailView({
               </div>
             </div>
 
-            {writeContractError && <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
-              <input type="checkbox" />
-              <div className="collapse-title font-semibold">
-                Error
-              </div>
-              <div className="collapse-content text-sm">
-                <div className="max-w-full wrap-break-word">
-                  {writeContractError.message || "Unknown error"}
-                </div>
-              </div>
-            </div>}
+            {writeContractError && <CollapsedError error={writeContractError} />}
           </div>
           {hasItems && tokenData.decimals !== undefined && <table className="table w-fit">
             <tbody>
@@ -454,6 +476,28 @@ export default function AirdropDetailView({
               onClick={() => deleteAirdrop(airdrop.id).then(() => navigate("/airdrops"))}
               disabled={deleteIsSubmitting}
             >Delete</button>
+          </div>
+        </div>
+      </dialog>
+      <dialog id="airdrop-terms-modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Do you accept the terms of the airdrop?</h3>
+          <div>
+            <a href={airdrop.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">View terms</a>
+          </div>
+          <label className="label">
+            <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />
+            I accept the terms of the airdrop
+          </label>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn btn-soft">Cancel</button>
+            </form>
+            {ownAirdropItems.length > 0 && <button
+              className={`btn ${hasClaimed ? "btn-success" : "btn-primary"}`}
+              onClick={() => !hasClaimed && claimAirdrop(ownAirdropItems[0].address, ownAirdropItems[0].amount as `${number}`, true)}
+              disabled={isLoadingHasClaimed || !termsAccepted}
+            >Claim</button>}
           </div>
         </div>
       </dialog>

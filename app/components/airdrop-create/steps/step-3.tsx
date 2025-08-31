@@ -7,6 +7,7 @@ import { useDeployContract, useReadContract, useTransactionConfirmations, useWai
 import type { AirdropData } from "../airdrop-create";
 import TokenMetadataDisplay from "~/components/token-metadata-display";
 import { useGetChainNameById } from "~/hooks/contracts";
+import CollapsedError from "~/components/error";
 
 interface StepThreeProps {
   airdropData: AirdropData;
@@ -217,19 +218,7 @@ const AirdropSetupStepThree = ({ csvResult, airdropData, setStep }: StepThreePro
           chainId={airdropData.chainId}
           tokenAddress={airdropData.tokenAddress}
         />
-        {error && (
-          <div className="collapse collapse-arrow bg-error border-base-300 border grid-cols-[100%]">
-            <input type="checkbox" />
-            <div className="collapse-title font-semibold">
-              Error
-            </div>
-            <div className="collapse-content text-sm">
-              <div className="max-w-full wrap-break-word">
-                {error}
-              </div>
-            </div>
-          </div>
-        )}
+        {error && <CollapsedError error={error} />}
       </div>
     </div>
     <div className="flex flex-col items-center gap-2 pt-4 mt-auto mb-4">
