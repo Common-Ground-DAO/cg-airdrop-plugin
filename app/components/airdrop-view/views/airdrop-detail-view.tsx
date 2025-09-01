@@ -238,6 +238,7 @@ export default function AirdropDetailView({
   useEffect(() => {
     if (!isPendingWriteContract) return;
     (document.getElementById("airdrop-terms-modal") as any)?.close();
+    setTermsAccepted(false);
   }, [isPendingWriteContract]);
 
   const fundAirdropContract = useCallback(() => {
@@ -482,8 +483,10 @@ export default function AirdropDetailView({
       <dialog id="airdrop-terms-modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Do you accept the terms of the airdrop?</h3>
-          <div>
-            <a href={airdrop.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">View terms</a>
+          <div className="my-4">
+            <a href={airdrop.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+              <MdArrowOutward className="inline-block mr-1" />View terms
+            </a>
           </div>
           <label className="label">
             <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />

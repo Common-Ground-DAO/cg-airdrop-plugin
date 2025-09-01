@@ -79,7 +79,8 @@ export default function VestingDetailView({
   // Close terms modal when release is running
   useEffect(() => {
     if (!isPendingWriteContract) return;
-    (document.getElementById("airdrop-terms-modal") as any)?.close();
+    (document.getElementById("vesting-terms-modal") as any)?.close();
+    setTermsAccepted(false);
   }, [isPendingWriteContract]);
 
   const { data: transactionReceipt, isLoading: isLoadingTransactionReceipt, error: transactionReceiptError } = useTransactionReceipt({
@@ -373,8 +374,10 @@ export default function VestingDetailView({
       <dialog id="vesting-terms-modal" className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Do you accept the terms of the vesting?</h3>
-          <div>
-            <a href={vesting.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">View terms</a>
+          <div className="my-4">
+            <a href={vesting.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
+              <MdArrowOutward className="inline-block mr-1" />View terms
+            </a>
           </div>
           <label className="label">
             <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />
