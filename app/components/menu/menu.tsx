@@ -25,20 +25,20 @@ export default function Menu() {
             </li>
             <li>
                 <NavLink
-                    to="/airdrops"
-                    className={`flex flex-row items-center gap-2 ${airdropsPathRegex.test(location.pathname) ? 'bg-primary text-primary-content' : ''}`}
-                >
-                    <FaParachuteBox />
-                    Airdrops
-                </NavLink>
-            </li>
-            <li>
-                <NavLink
                     to="/vestings"
                     className={`flex flex-row items-center gap-2 ${vestingsPathRegex.test(location.pathname) ? 'bg-primary text-primary-content' : ''}`}
                 >
                     <TbClockDollar />
-                    Vestings
+                    Vested Claims
+                </NavLink>
+            </li>
+            <li>
+                <NavLink
+                    to="/airdrops"
+                    className={`flex flex-row items-center gap-2 ${airdropsPathRegex.test(location.pathname) ? 'bg-primary text-primary-content' : ''}`}
+                >
+                    <FaParachuteBox />
+                    Unvested Claims
                 </NavLink>
             </li>
         </ul>
@@ -46,20 +46,20 @@ export default function Menu() {
             <div className="divider mt-2 mb-1 px-3 py-1.5">Admin</div>
             <li>
                 <NavLink
-                    to="/airdrops/create"
-                    className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
-                >
-                    <RiAddLargeFill />
-                    Create Airdrop
-                </NavLink>
-            </li>
-            <li>
-                <NavLink
                     to="/vestings/create"
                     className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
                 >
                     <RiAddLargeFill />
-                    Create Vesting
+                    Create Vested
+                </NavLink>
+            </li>
+            <li>
+                <NavLink
+                    to="/airdrops/create"
+                    className={({ isActive }) => isActive ? "flex flex-row items-center gap-2 bg-primary text-primary-content" : "flex flex-row items-center gap-2"}
+                >
+                    <RiAddLargeFill />
+                    Create Unvested
                 </NavLink>
             </li>
         </ul>}

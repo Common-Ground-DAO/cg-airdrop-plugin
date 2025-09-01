@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useSubmit } from "react-router";
 import { useCgData } from "~/context/cg_data";
 import type { Vesting } from "generated/prisma";
 import { useErc20Abi, useTokenData, useVestingAbi } from "~/hooks";
-import { useAccount, useReadContract, useTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useReadContract, useTransactionReceipt, useWriteContract, useSwitchChain } from "wagmi";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IoTrashOutline } from "react-icons/io5";
 import { GrValidate } from "react-icons/gr";
@@ -29,7 +29,8 @@ export default function VestingDetailView({
   const { isAdmin } = useCgData();
   const vestingAbi = useVestingAbi();
   const erc20Abi = useErc20Abi();
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
   const navigate = useNavigate();
   const [verifyState, setVerifyState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const tokenData = useTokenData(vesting.tokenAddress as `0x${string}`, vesting.chainId);
@@ -58,6 +59,12 @@ export default function VestingDetailView({
     if (!vesting.verification) return null;
     return vesting.verification as VerificationStatus;
   }, [vesting.verification]);
+
+  useEffect(() => {
+    if (chain?.id !== undefined && chain?.id !== vesting.chainId) {
+      switchChain({ chainId: vesting.chainId });
+    }
+  }, [chain?.id, vesting.chainId, switchChain]);
 
   // Set interval for verifying contract button
   useEffect(() => {
@@ -230,13 +237,14 @@ export default function VestingDetailView({
   const errors = [beneficiaryError, startError, durationError, releasableError, releasedError, vestedAmountError].filter(Boolean);
 
   const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse) && verifyState !== "success";
+  const addressAndChainOk = !!address && chain?.id !== undefined && chain?.id === vesting.chainId;
 
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
         <nav className="flex flex-row gap-2 items-center m-4 mb-0">
           <NavLink to="/vestings" className="text-xl font-bold hover:underline">
-            Vestings
+            Vested Claims
           </NavLink>
           <div className="text-xl font-bold">&gt;</div>
           <div className="text-xl font-bold">{vesting.name}</div>
@@ -244,7 +252,7 @@ export default function VestingDetailView({
             <button
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-vesting-modal") as any)?.showModal()}
-            ><IoTrashOutline /><span>Delete Vesting</span></button>
+            ><IoTrashOutline /><span>Delete this</span></button>
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={verifyContract}
@@ -252,22 +260,22 @@ export default function VestingDetailView({
             ><GrValidate /><span>{verifyContractIn !== null ? `Verify in ${verifyContractIn}` : "Verify Contract"}</span></button>}
           </div>}
         </nav>
-        {!address && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {!addressAndChainOk && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
             <div className="alert alert-warning">
-              <MdWarning className="inline-block mr-1" />Connect wallet to view vesting details
+              <MdWarning className="inline-block mr-1" />Connect wallet and select correct chain to view details
             </div>
           </div>
         </div>}
-        {!!address && isLoading && !errors.length && (
+        {addressAndChainOk && isLoading && !errors.length && (
           <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
             <div className="flex flex-col max-w-full justify-start gap-4 mt-8">
               <div className="loading loading-spinner loading-lg"></div>
             </div>
           </div>
         )}
-        {!!address && errors.map((error) => <CollapsedError error={error} />)}
-        {!!address && !isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {addressAndChainOk && errors.map((error) => <CollapsedError error={error} />)}
+        {addressAndChainOk && !isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
@@ -285,7 +293,7 @@ export default function VestingDetailView({
                     <td className="text-right">{beneficiary}</td>
                   </tr>
                   <tr>
-                    <td>Vesting contract</td>
+                    <td>Vested claim contract</td>
                     <td className="text-right">
                       {vesting.contractAddress}
                     </td>
@@ -364,7 +372,7 @@ export default function VestingDetailView({
       </div>
       <dialog id="delete-vesting-modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Are you sure you want to delete this vesting?</h3>
+          <h3 className="font-bold text-lg">Are you sure you want to delete this vested claim?</h3>
           <p className="py-4">This action cannot be undone and does not affect any deployed contracts.</p>
           <div className="modal-action">
             <form method="dialog">
@@ -380,15 +388,15 @@ export default function VestingDetailView({
       </dialog>
       <dialog id="vesting-terms-modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Do you accept the terms of the vesting?</h3>
+          <h3 className="font-bold text-lg">Do you accept the terms of this claim?</h3>
           <div className="my-4">
             <a href={vesting.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
-              <MdArrowOutward className="inline-block mr-1" />View terms
+              <MdArrowOutward className="inline-block mr-1" />View terms and conditions
             </a>
           </div>
           <label className="label">
             <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />
-            I accept the terms of the vesting
+            I accept the terms and conditions
           </label>
           <div className="modal-action">
             <form method="dialog">

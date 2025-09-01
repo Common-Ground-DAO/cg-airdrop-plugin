@@ -12,7 +12,7 @@ export default function VestingListView({ vestings }: VestingListViewProps) {
 
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
-      <h1 className="text-xl font-bold p-4 pb-0">Vestings</h1>
+      <h1 className="text-xl font-bold p-4 pb-0">Vested Claims</h1>
       {!!vestings && vestings.length > 0 && <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
         {vestings.map((vesting) => (
           <NavLink
@@ -28,7 +28,7 @@ export default function VestingListView({ vestings }: VestingListViewProps) {
           </NavLink>
         ))}
       </div>}
-      {!!vestings && vestings.length === 0 && <div className="flex flex-col items-center justify-center w-full">No vestings found for this community :(</div>}
+      {!!vestings && vestings.length === 0 && <div className="flex flex-col items-center justify-center w-full">No vested claims found for this community :(</div>}
       {!vestings && <div className="flex flex-col items-center justify-center w-full">Loading...</div>}
     </div>
   );

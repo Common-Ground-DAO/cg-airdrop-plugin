@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
+import { NavLink, useFetcher, useNavigate } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoTrashOutline } from "react-icons/io5";
 import { GrValidate } from "react-icons/gr";
@@ -7,7 +7,7 @@ import { MdArrowOutward, MdWarning } from "react-icons/md";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
-import { useAccount, useReadContract, useTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useReadContract, useTransactionReceipt, useWriteContract, useSwitchChain } from "wagmi";
 import { formatUnits, parseUnits } from "viem";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import type { StandardMerkleTreeData } from "@openzeppelin/merkle-tree/dist/standard";
@@ -36,7 +36,8 @@ export default function AirdropDetailView({
   }>();
   const { isAdmin } = useCgData();
   const tokenData = useTokenData(airdrop.tokenAddress as `0x${string}`, airdrop.chainId);
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
   const [fundsToAdd, _setFundsToAdd] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
   const airdropAbi = useAirdropAbi();
@@ -48,6 +49,13 @@ export default function AirdropDetailView({
     airdrop.createdAt.getTime() > Date.now() - 1000 * 60 
     ? `${60 + Math.floor((airdrop.createdAt.getTime() - Date.now()) / 1000)}s` 
     : null);
+  
+  // Switch chain if needed
+  useEffect(() => {
+    if (chain?.id !== undefined && chain?.id !== airdrop.chainId) {
+      switchChain({ chainId: airdrop.chainId });
+    }
+  }, [chain?.id, airdrop.chainId, switchChain]);
 
   const pluginLib = useCgPluginLib();
   const navigateLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -305,13 +313,14 @@ export default function AirdropDetailView({
     !airdropAbi || !erc20Abi || !lsp7Abi;
 
   const showVerifyButton = isAdmin && (!verification?.blockscoutResponse || !verification?.etherscanResponse) && verifyState !== "success";
+  const addressAndChainOk = !!address && chain?.id !== undefined && chain?.id === airdrop.chainId;
 
   return (
     <>
       <div className="flex flex-col gap-4 overflow-hidden">
         <nav className="flex flex-row gap-2 items-center m-4 mb-0">
           <NavLink to="/airdrops" className="text-xl font-bold hover:underline">
-            Airdrops
+            Unvested Claims
           </NavLink>
           <div className="text-xl font-bold">&gt;</div>
           <div className="text-xl font-bold">{airdrop.name}</div>
@@ -319,7 +328,7 @@ export default function AirdropDetailView({
             <button
               className="btn btn-error btn-xs gap-1"
               onClick={() => (document.getElementById("delete-airdrop-modal") as any)?.showModal()}
-            ><IoTrashOutline /><span>Delete Airdrop</span></button>
+            ><IoTrashOutline /><span>Delete this</span></button>
             {showVerifyButton && <button
               className="btn btn-xs gap-1"
               onClick={verifyContract}
@@ -327,22 +336,22 @@ export default function AirdropDetailView({
             ><GrValidate /><span>{verifyContractIn !== null ? `Verify in ${verifyContractIn}` : "Verify Contract"}</span></button>}
           </div>}
         </nav>
-        {!address && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {!addressAndChainOk && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
             <div className="alert alert-warning">
-              <MdWarning className="inline-block mr-1" />Connect wallet to view vesting details
+              <MdWarning className="inline-block mr-1" />Connect wallet and select correct chain to view details
             </div>
           </div>
         </div>}
-        {!!address && isLoading && !errors.length && (
+        {addressAndChainOk && isLoading && !errors.length && (
           <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
             <div className="flex flex-col max-w-full justify-start gap-4 mt-8">
               <div className="loading loading-spinner loading-lg"></div>
             </div>
           </div>
         )}
-        {!!address && errors.map((error) => <CollapsedError error={error} />)}
-        {!!address && !isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {addressAndChainOk && errors.map((error) => <CollapsedError error={error} />)}
+        {addressAndChainOk && !isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
@@ -367,7 +376,7 @@ export default function AirdropDetailView({
                       </td>
                     </tr>
                     <tr>
-                      <td>Total airdrop amount</td>
+                      <td>Total unvested claim amount</td>
                       <td><FormatUnits className="text-right" value={totalAirdropAmount.toString()} decimals={tokenData.decimals || 0} /></td>
                     </tr>
                     <tr>
@@ -375,7 +384,7 @@ export default function AirdropDetailView({
                       <td><FormatUnits className="text-right" value={totalClaimedAmount?.toString() || "0"} decimals={tokenData.decimals || 0} /></td>
                     </tr>
                     <tr>
-                      <td>Airdrop contract balance</td>
+                      <td>Unvested claim contract balance</td>
                       <td><FormatUnits className="text-right" value={airdropContractBalance?.toString() || "0"} decimals={tokenData.decimals || 0} /></td>
                     </tr>
                     {missingFunds > 0n && <>
@@ -467,13 +476,13 @@ export default function AirdropDetailView({
             </tbody>
           </table>}
           {!airdropItemsFetcher.data ? <div className="grow">Loading items...</div> : tokenData.decimals === undefined ? <div className="grow">Loading contract data...</div> : null}
-          {airdropItemsFetcher.data?.airdropItems.length === 0 && <div>No airdrop items found for this airdrop :(</div>}
+          {airdropItemsFetcher.data?.airdropItems.length === 0 && <div>No items found for this claim :(</div>}
           {tokenData.error && <div>Error: {tokenData.error.message}</div>}
         </div>}
       </div>
       <dialog id="delete-airdrop-modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Are you sure you want to delete this airdrop?</h3>
+          <h3 className="font-bold text-lg">Are you sure you want to delete this unvested claim?</h3>
           <p className="py-4">This action cannot be undone and does not affect any deployed contracts.</p>
           <div className="modal-action">
             <form method="dialog">
@@ -489,15 +498,15 @@ export default function AirdropDetailView({
       </dialog>
       <dialog id="airdrop-terms-modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Do you accept the terms of the airdrop?</h3>
+          <h3 className="font-bold text-lg">Do you accept the terms of this claim?</h3>
           <div className="my-4">
             <a href={airdrop.termsLink || ""} onClick={(ev) => navigateLink(ev)} rel="noopener noreferrer">
-              <MdArrowOutward className="inline-block mr-1" />View terms
+              <MdArrowOutward className="inline-block mr-1" />View terms and conditions
             </a>
           </div>
           <label className="label">
             <input type="checkbox" className="checkbox" checked={termsAccepted} onChange={(ev) => setTermsAccepted(ev.target.checked)} />
-            I accept the terms of the airdrop
+            I accept the terms and conditions
           </label>
           <div className="modal-action">
             <form method="dialog">

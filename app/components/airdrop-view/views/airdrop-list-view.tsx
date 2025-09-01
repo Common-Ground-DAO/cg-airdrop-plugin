@@ -12,7 +12,7 @@ export default function AirdropListView({
 
   return (
     <div className="flex flex-col gap-4 flex-1 h-full max-h-full overflow-hidden">
-      <h1 className="text-xl font-bold p-4 pb-0">Airdrops</h1>
+      <h1 className="text-xl font-bold p-4 pb-0">Unvested Claims</h1>
       {!!airdrops && airdrops.length > 0 && <div className="flex flex-col gap-4 w-full max-w-full flex-1 overflow-auto">
         {airdrops.map((airdrop) => (
           <NavLink
@@ -28,7 +28,7 @@ export default function AirdropListView({
           </NavLink>
         ))}
       </div>}
-      {!!airdrops && airdrops.length === 0 && <div className="flex flex-col items-center justify-center w-full">No airdrops found for this community :(</div>}
+      {!!airdrops && airdrops.length === 0 && <div className="flex flex-col items-center justify-center w-full">No unvested claims found for this community :(</div>}
       {!airdrops && <div className="flex flex-col items-center justify-center w-full">Loading...</div>}
     </div>
   );
