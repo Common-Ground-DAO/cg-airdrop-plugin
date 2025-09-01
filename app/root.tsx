@@ -91,10 +91,10 @@ const config = createConfig({
   connectors: [injected()],
   transports: {
     [hardhat.id]: http('http://127.0.0.1:8545'),
-    [mainnet.id]: http(),
-    [base.id]: http(),
+    [mainnet.id]: http('https://mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
+    [base.id]: http('https://base-mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
     [bsc.id]: http(),
-    [arbitrum.id]: http(),
+    [arbitrum.id]: http('https://arbitrum-mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
     [arbitrumNova.id]: http(),
     [avalanche.id]: http(),
     [celo.id]: http(),
