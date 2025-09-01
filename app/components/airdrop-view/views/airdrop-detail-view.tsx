@@ -3,7 +3,7 @@ import { NavLink, useFetcher, useNavigate, useSubmit } from "react-router";
 import type { Airdrop, AirdropItem, MerkleTree } from "generated/prisma";
 import { IoTrashOutline } from "react-icons/io5";
 import { GrValidate } from "react-icons/gr";
-import { MdArrowOutward } from "react-icons/md";
+import { MdArrowOutward, MdWarning } from "react-icons/md";
 import FormatUnits from "../../format-units/format-units";
 import { useCgData } from "~/context/cg_data";
 import { useAirdropAbi, useTokenData } from "~/hooks";
@@ -327,15 +327,22 @@ export default function AirdropDetailView({
             ><GrValidate /><span>{verifyContractIn !== null ? `Verify in ${verifyContractIn}` : "Verify Contract"}</span></button>}
           </div>}
         </nav>
-        {isLoading && !errors.length && (
+        {!address && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+          <div className="flex flex-col w-lg max-w-lg justify-start gap-4">
+            <div className="alert alert-warning">
+              <MdWarning className="inline-block mr-1" />Connect wallet to view vesting details
+            </div>
+          </div>
+        </div>}
+        {!!address && isLoading && !errors.length && (
           <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
             <div className="flex flex-col max-w-full justify-start gap-4 mt-8">
               <div className="loading loading-spinner loading-lg"></div>
             </div>
           </div>
         )}
-        {errors.map((error) => <CollapsedError error={error} />)}
-        {!isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
+        {!!address && errors.map((error) => <CollapsedError error={error} />)}
+        {!!address && !isLoading && !errors.length && <div className="flex flex-col items-center flex-1 gap-4 overflow-auto">
           <div className="flex flex-col max-w-full justify-start gap-4">
             <TokenMetadataDisplay
               tokenData={tokenData}
