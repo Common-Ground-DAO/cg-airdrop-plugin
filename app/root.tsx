@@ -26,7 +26,7 @@ import {
   scroll,
   sepolia,
 } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
+import { injected, walletConnect } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./app.css";
 import { CgPluginLibProvider } from "./context/plugin_lib";
@@ -66,6 +66,10 @@ export const links = () => [
 
 const queryClient = new QueryClient();
 
+if (!import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID) {
+  throw new Error('❌ WALLET_CONNECT_PROJECT_ID is required for WalletConnect');
+}
+
 // Create wagmi config
 const config = createConfig({
   chains: [
@@ -88,7 +92,11 @@ const config = createConfig({
     scroll,
     sepolia,
   ],
-  connectors: [injected()],
+  connectors: [injected(),
+              walletConnect({
+      projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID,
+      showQrModal: true,
+    })],
   transports: {
     [hardhat.id]: http('http://127.0.0.1:8545'),
     [mainnet.id]: http('https://mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
