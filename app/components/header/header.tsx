@@ -1,13 +1,14 @@
 import type { CommunityInfoResponsePayload } from "@common-ground-dao/cg-plugin-lib";
 import { IoChevronDown } from "react-icons/io5";
-import { useAccount, useConnect, useDisconnect, useSwitchChain, useChains } from "wagmi";
+import { useAccount, useSwitchChain, useChains } from "wagmi";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useCgData } from "~/context/cg_data";
 
 export default function Header() {
   const { communityInfo } = useCgData();
 
   return (
-    <div className="p-4 flex gap-2 flex-wrap">
+    <div className="p-4 flex gap-2 flex-wrap justify-between">
       <div className="flex flex-row items-center justify-start gap-3">
         {!!communityInfo && <CommunityInfo communityInfo={communityInfo} />}
       </div>
@@ -67,43 +68,74 @@ function ChainSwitcher() {
 }
 
 function WalletConnect() {
-  const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { isConnected } = useAccount();
 
-  const installedWallets = connectors.filter(c => c.type === "injected");
+  return (
+    <div className="flex flex-row items-center gap-2">
+      {isConnected && <ChainSwitcher />}
+      <ConnectButton.Custom>
+        {({
+          account,
+          chain,
+          openAccountModal,
+          openChainModal,
+          openConnectModal,
+          authenticationStatus,
+          mounted,
+        }) => {
+          // Note: If your app doesn't use authentication, you
+          // can remove all 'authenticationStatus' checks
+          const ready = mounted && authenticationStatus !== 'loading';
+          const connected =
+            ready &&
+            account &&
+            chain &&
+            (!authenticationStatus ||
+              authenticationStatus === 'authenticated');
 
-  if (isConnected) {
-    return (
-      <div className="flex flex-row items-center gap-2">
-        <ChainSwitcher />
-        <p className="font-mono text-xs">Connected: {!address ? "Unknown" : `${address.slice(0, 6)}...${address.slice(-4)}`}</p>
-        <button className="btn btn-sm btn-outline" onClick={() => disconnect()}>
-          Disconnect
-        </button>
-      </div>
-    );
-  }
+          return (
+            <div
+              {...(!ready && {
+                'aria-hidden': true,
+                'style': {
+                  opacity: 0,
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                },
+              })}
+            >
+              {(() => {
+                if (!connected) {
+                  return (
+                    <button 
+                      onClick={openConnectModal} 
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                    >
+                      Connect Wallet
+                    </button>
+                  );
+                }
 
-  return (<>
-    <button
-      className="btn btn-sm btn-primary"
-      onClick={() => (document.getElementById('my_modal_2') as any)?.showModal()}
-    >
-      Connect Wallet
-    </button>
-    <dialog id="my_modal_2" className="modal">
-      <div className="modal-box flex flex-col gap-2 w-sm">
-        <b>Choose a wallet to connect</b>
-        {installedWallets.map(c => (
-          <button key={c.id} className="btn btn-primary w-full" onClick={() => connect({ connector: c })}>
-            {c.name}
-          </button>
-        ))}
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
-  </>);
+                return (
+                  <div className="flex flex-row items-center gap-2">
+                    <p className="font-mono text-xs">
+                      Connected: {account.displayName || `${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
+                    </p>
+                    <button 
+                      onClick={openAccountModal} 
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                    >
+                      Manage
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        }}
+      </ConnectButton.Custom>
+    </div>
+  );
 }

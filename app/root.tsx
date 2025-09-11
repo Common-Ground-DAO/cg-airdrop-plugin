@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { WagmiProvider, createConfig, http } from 'wagmi';
+import { WagmiProvider } from 'wagmi';
 import {
   mainnet,
   base,
@@ -26,8 +26,9 @@ import {
   scroll,
   sepolia,
 } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import '@rainbow-me/rainbowkit/styles.css';
 import "./app.css";
 import { CgPluginLibProvider } from "./context/plugin_lib";
 import { CgDataProvider } from "./context/cg_data";
@@ -66,8 +67,10 @@ export const links = () => [
 
 const queryClient = new QueryClient();
 
-// Create wagmi config
-const config = createConfig({
+// Create RainbowKit config with all your existing chains
+const config = getDefaultConfig({
+  appName: 'CG Airdrop Plugin',
+  projectId: '98aff99263d5c1f65f8fbc5c7f890f96', // You can get a proper WalletConnect project ID from https://cloud.walletconnect.com
   chains: [
     hardhat,
     mainnet,
@@ -88,27 +91,7 @@ const config = createConfig({
     scroll,
     sepolia,
   ],
-  connectors: [injected()],
-  transports: {
-    [hardhat.id]: http('http://127.0.0.1:8545'),
-    [mainnet.id]: http('https://mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
-    [base.id]: http('https://base-mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
-    [bsc.id]: http(),
-    [arbitrum.id]: http('https://arbitrum-mainnet.infura.io/v3/4de456358596494087a0aa335a5aeaf7'),
-    [arbitrumNova.id]: http(),
-    [avalanche.id]: http(),
-    [celo.id]: http(),
-    [fantom.id]: http(),
-    [gnosis.id]: http(),
-    [linea.id]: http(),
-    [lukso.id]: http(),
-    [luksoTestnet.id]: http(),
-    [optimism.id]: http(),
-    [polygon.id]: http(),
-    [polygonZkEvm.id]: http(),
-    [scroll.id]: http(),
-    [sepolia.id]: http(),
-  },
+  ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -136,9 +119,11 @@ export default function App() {
         <CgDataProvider>
           <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-              <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200 p-0 m-0" data-theme={theme}>
-                <Outlet />
-              </div>
+              <RainbowKitProvider>
+                <div className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] overflow-hidden bg-base-200 p-0 m-0" data-theme={theme}>
+                  <Outlet />
+                </div>
+              </RainbowKitProvider>
             </QueryClientProvider>
           </WagmiProvider>
         </CgDataProvider>
