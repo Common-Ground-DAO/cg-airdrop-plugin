@@ -12,4 +12,15 @@ if (fs.existsSync(".env.local")) {
   Object.assign(env, env2);
 }
 
+// Variables from the process environment (e.g. set in Coolify)
+// take precedence over the .env files
+Object.assign(env, process.env);
+
+// PEM keys are often stored on a single line with literal "\n"
+for (const key of ["PLUGIN_PRIVATE_KEY", "VITE_PLUGIN_PUBLIC_KEY"]) {
+  if (typeof env[key] === "string") {
+    env[key] = env[key].replace(/\\n/g, "\n");
+  }
+}
+
 export default env;

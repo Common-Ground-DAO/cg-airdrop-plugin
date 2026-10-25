@@ -16,7 +16,7 @@ export function CgPluginLibProvider({ children }: { children: React.ReactNode })
 
     useEffect(() => {
         if (iframeUid && !initPromiseRef.current && (!cgPluginLib || cgPluginLib.iframeUid !== iframeUid)) {
-            initPromiseRef.current = CgPluginLib.initialize(iframeUid, `${import.meta.env.BASE_URL}api/sign`, import.meta.env.VITE_PLUGIN_PUBLIC_KEY)
+            initPromiseRef.current = CgPluginLib.initialize(iframeUid, `${import.meta.env.BASE_URL}api/sign`, import.meta.env.VITE_PLUGIN_PUBLIC_KEY?.replace(/\\n/g, "\n"))
                 .then((lib) => {
                     setCgPluginLib({ lib, iframeUid });
                 })

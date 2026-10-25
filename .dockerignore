@@ -6,3 +6,4 @@ contracts/artifacts
 contracts/cache
 app/contracts
 README.md
+prisma/db/*.db
