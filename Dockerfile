@@ -20,6 +20,7 @@ ARG VITE_CG_DATA_REFRESH_INTERVAL
 ARG VITE_AIRDROP_REFRESH_INTERVAL
 ARG VITE_PLUGIN_PUBLIC_KEY
 ARG VITE_URL_PREFIX
+ARG VITE_MAINNET_RPC_URL
 ARG ALLOWED_ACTION_ORIGINS
 RUN npx hardhat compile --force --config /app/contracts/hardhat.config.cjs && \
     npx hardhat run --config /app/contracts/hardhat.config.cjs /app/contracts/scripts/generate-verification-data.ts

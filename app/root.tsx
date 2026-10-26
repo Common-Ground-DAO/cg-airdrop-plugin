@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, fallback, http, type Transport } from 'wagmi';
 import {
   mainnet,
   base,
@@ -67,30 +67,49 @@ export const links = () => [
 
 const queryClient = new QueryClient();
 
+const chains = [
+  hardhat,
+  mainnet,
+  base,
+  bsc,
+  arbitrum,
+  arbitrumNova,
+  avalanche,
+  celo,
+  fantom,
+  gnosis,
+  linea,
+  lukso,
+  luksoTestnet,
+  optimism,
+  polygon,
+  polygonZkEvm,
+  scroll,
+  sepolia,
+] as const;
+
+// viem's default mainnet RPC (eth.merkle.io) is heavily rate limited and its
+// 429 responses carry no CORS headers, so use our own RPC with public fallbacks.
+const mainnetRpcUrls = [
+  import.meta.env.VITE_MAINNET_RPC_URL,
+  'https://ethereum-rpc.publicnode.com',
+].filter((url): url is string => !!url);
+
+const transports = Object.fromEntries(
+  chains.map((chain) => [
+    chain.id,
+    chain.id === mainnet.id
+      ? fallback([...mainnetRpcUrls.map((url) => http(url)), http()])
+      : http(),
+  ])
+) as Record<(typeof chains)[number]['id'], Transport>;
+
 // Create RainbowKit config with all your existing chains
 const config = getDefaultConfig({
   appName: 'CG Airdrop Plugin',
   projectId: '98aff99263d5c1f65f8fbc5c7f890f96', // You can get a proper WalletConnect project ID from https://cloud.walletconnect.com
-  chains: [
-    hardhat,
-    mainnet,
-    base,
-    bsc,
-    arbitrum,
-    arbitrumNova,
-    avalanche,
-    celo,
-    fantom,
-    gnosis,
-    linea,
-    lukso,
-    luksoTestnet,
-    optimism,
-    polygon,
-    polygonZkEvm,
-    scroll,
-    sepolia,
-  ],
+  chains,
+  transports,
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
